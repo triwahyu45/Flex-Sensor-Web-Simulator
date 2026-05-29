@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#061325" />
+    <title>Virtual ESP32</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body data-page="virtual">
+    <header class="topbar">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">32</span>
+        <span>
+          <strong>Virtual ESP32</strong>
+          <small>Pengirim data pengganti hardware</small>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Halaman">
+        <a href="simulator.html">Simulator</a>
+        <a class="active" href="virtual-esp32.html">Virtual ESP32</a>
+      </nav>
+      <div class="status-dot live">Streaming</div>
+    </header>
+
+    <main class="virtual-layout">
+      <section class="virtual-board">
+        <div class="panel-head">
+          <span>Analog Input Simulator</span>
+          <strong>ESP32 DevKit V1</strong>
+        </div>
+        <div class="board-scene" aria-label="Virtual ESP32 board">
+          <div class="sensor-card sensor-a">
+            <span>Flex A</span>
+            <strong id="virtualFlexARead">2048</strong>
+            <small>arm kiri-kanan</small>
+          </div>
+          <div class="board">
+            <div class="usb"></div>
+            <div class="chip">ESP32</div>
+            <div class="pin-row left"></div>
+            <div class="pin-row right"></div>
+            <div class="antenna"></div>
+          </div>
+          <div class="sensor-card sensor-b">
+            <span>Flex B</span>
+            <strong id="virtualFlexBRead">0</strong>
+            <small>grip / servo</small>
+          </div>
+        </div>
+      </section>
+
+      <aside class="virtual-controls">
+        <section class="instrument-panel">
+          <div class="panel-head compact">
+            <span>Flex Sensor A</span>
+            <strong>Arm</strong>
+          </div>
+          <label class="slider-row">
+            <span>Kiri ↔ Kanan</span>
+            <input id="flexAInput" type="range" min="0" max="4095" value="2048" />
+          </label>
+        </section>
+
+        <section class="instrument-panel">
+          <div class="panel-head compact">
+            <span>Flex Sensor B</span>
+            <strong>Grip</strong>
+          </div>
+          <label class="slider-row">
+            <span>Buka ↔ Tutup</span>
+            <input id="flexBInput" type="range" min="0" max="4095" value="0" />
+          </label>
+        </section>
+
+        <section class="instrument-panel">
+          <div class="panel-head compact">
+            <span>Realtime Stream</span>
+            <strong id="fpsRead">60 FPS</strong>
+          </div>
+          <label class="slider-row">
+            <span>Send Rate</span>
+            <input id="fpsInput" type="range" min="15" max="60" step="15" value="60" />
+          </label>
+          <button id="centerInputs" class="small-action full">Center Arm + Open Grip</button>
+          <pre id="payloadPreview" class="payload-preview"></pre>
+        </section>
+      </aside>
+    </main>
+
+    <script src="assets/app.js"></script>
+  </body>
+</html>
