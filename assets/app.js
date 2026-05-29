@@ -18,13 +18,17 @@ const defaultSettings = {
   servo: { source: 'flexA', inMin: 0, inMax: 4095, outMin: 0, outMax: 180 },
   gripper: { armSource: 'flexA', armInMin: 0, armInMax: 4095, gripSource: 'flexB', gripInMin: 0, gripInMax: 4095 },
   audio: {
-    source: 'flexB',
     graphMin: 0,
     graphMax: 4095,
-    rules: [
+    flexARules: [
       { min: 0, max: 1364, text: 'Halo' },
       { min: 1365, max: 2729, text: 'Apa kabar' },
       { min: 2730, max: 4095, text: 'Semangat' },
+    ],
+    flexBRules: [
+      { min: 0, max: 1364, text: 'Aulia' },
+      { min: 1365, max: 2729, text: 'Siap' },
+      { min: 2730, max: 4095, text: 'Mantap' },
     ],
   },
 };
@@ -54,10 +58,19 @@ function normalizeMdns(value) {
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+    const legacyRules = saved.audio?.rules;
+    const audio = {
+      ...defaultSettings.audio,
+      ...saved.audio,
+      flexARules: saved.audio?.flexARules || legacyRules || defaultSettings.audio.flexARules,
+      flexBRules: saved.audio?.flexBRules || defaultSettings.audio.flexBRules,
+    };
+    delete audio.source;
+    delete audio.rules;
     return {
       servo: { ...defaultSettings.servo, ...saved.servo },
       gripper: { ...defaultSettings.gripper, ...saved.gripper },
-      audio: { ...defaultSettings.audio, ...saved.audio, rules: saved.audio?.rules || defaultSettings.audio.rules },
+      audio,
     };
   } catch {
     return structuredClone(defaultSettings);
@@ -68,9 +81,16 @@ function saveSettings(settings) {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
-function phraseFromFlex(value, settings) {
-  const rule = settings.audio.rules.find((item) => value >= numeric(item.min) && value <= numeric(item.max));
+function phraseFromRules(value, rules) {
+  const rule = rules.find((item) => value >= numeric(item.min) && value <= numeric(item.max));
   return rule?.text || '';
+}
+
+function phraseFromFlexes(flexA, flexB, settings) {
+  return [
+    phraseFromRules(flexA, settings.audio.flexARules),
+    phraseFromRules(flexB, settings.audio.flexBRules),
+  ].filter(Boolean).join(' ');
 }
 
 function payloadFromFlex(flexA, flexB, mdns = '', settings = loadSettings()) {
@@ -78,7 +98,6 @@ function payloadFromFlex(flexA, flexB, mdns = '', settings = loadSettings()) {
   const servoInput = flex[settings.servo.source] ?? flex.flexA;
   const armInput = flex[settings.gripper.armSource] ?? flex.flexA;
   const gripInput = flex[settings.gripper.gripSource] ?? flex.flexB;
-  const audioInput = flex[settings.audio.source] ?? flex.flexB;
 
   return {
     flexA: Math.round(flex.flexA),
@@ -86,7 +105,7 @@ function payloadFromFlex(flexA, flexB, mdns = '', settings = loadSettings()) {
     pan: round(mapCalibrated(armInput, settings.gripper.armInMin, settings.gripper.armInMax, -100, 100), 1),
     servo: round(mapCalibrated(servoInput, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax), 1),
     grip: round(mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 0, 100), 1),
-    phrase: phraseFromFlex(audioInput, settings),
+    phrase: phraseFromFlexes(flex.flexA, flex.flexB, settings),
     mdns: normalizeMdns(mdns),
     sentAt: Date.now(),
   };
@@ -206,19 +225,27 @@ function initSimulator() {
     ['gripSource', ['gripper', 'gripSource']],
     ['gripInMin', ['gripper', 'gripInMin'], true],
     ['gripInMax', ['gripper', 'gripInMax'], true],
-    ['audioSource', ['audio', 'source']],
     ['graphMin', ['audio', 'graphMin'], true],
     ['graphMax', ['audio', 'graphMax'], true],
   ].forEach(([id, path, isNumber]) => bindSetting(id, path, isNumber));
 
+  function setHeaderStatus(text, state = 'yellow') {
+    refs.status.innerHTML = `<i id="connectionLed" class="led led-${state}"></i> ${text}`;
+    refs.status.classList.toggle('live', state === 'green');
+    refs.led = document.getElementById('connectionLed');
+  }
+
   function acceptPayload(payload, source = 'Virtual') {
     const incomingMdns = normalizeMdns(payload?.mdns);
-    if (selectedMdns && incomingMdns && incomingMdns !== selectedMdns) return;
+    if (selectedMdns && incomingMdns && incomingMdns !== selectedMdns) {
+      setHeaderStatus('Disconnected - mDNS mismatch', 'red');
+      setConnectionStatus(`mDNS mismatch: ${incomingMdns}`, 'red');
+      return;
+    }
     const rawFlexA = numeric(payload.flexA, defaults.flexA);
     const rawFlexB = numeric(payload.flexB, defaults.flexB);
     target = payloadFromFlex(rawFlexA, rawFlexB, incomingMdns, settings);
-    refs.status.innerHTML = `<i id="connectionLed" class="led led-green"></i> ${source}`;
-    refs.led = document.getElementById('connectionLed');
+    setHeaderStatus(source, 'green');
   }
 
   createChannel((payload) => acceptPayload(payload, 'Virtual data'));
@@ -281,33 +308,36 @@ function initSimulator() {
   });
   syncModuleState();
 
-  function renderAudioRules() {
-    const container = $('audioRules');
+  function renderRuleSet(containerId, rules, sensorLabel) {
+    const container = $(containerId);
     container.innerHTML = '';
-    settings.audio.rules.forEach((rule, index) => {
+    rules.forEach((rule, index) => {
       const row = document.createElement('div');
       row.className = 'rule-row';
       row.innerHTML = `
-        <input type="number" value="${rule.min}" aria-label="Min suara" />
-        <input type="number" value="${rule.max}" aria-label="Max suara" />
-        <input type="text" value="${rule.text}" aria-label="Text suara" />
+        <input type="number" value="${rule.min}" aria-label="${sensorLabel} min suara" />
+        <input type="number" value="${rule.max}" aria-label="${sensorLabel} max suara" />
+        <input type="text" value="${rule.text}" aria-label="${sensorLabel} text suara" />
         <button class="mini-action" type="button">Hapus</button>
       `;
       const [minInput, maxInput, textInput, deleteButton] = row.children;
       minInput.addEventListener('input', () => {
         rule.min = numeric(minInput.value);
         saveSettings(settings);
+        target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
       });
       maxInput.addEventListener('input', () => {
         rule.max = numeric(maxInput.value);
         saveSettings(settings);
+        target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
       });
       textInput.addEventListener('input', () => {
         rule.text = textInput.value;
         saveSettings(settings);
+        target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
       });
       deleteButton.addEventListener('click', () => {
-        settings.audio.rules.splice(index, 1);
+        rules.splice(index, 1);
         saveSettings(settings);
         renderAudioRules();
       });
@@ -315,8 +345,20 @@ function initSimulator() {
     });
   }
 
-  $('addAudioRule').addEventListener('click', () => {
-    settings.audio.rules.push({ min: 0, max: 4095, text: 'Suara baru' });
+  function renderAudioRules() {
+    renderRuleSet('audioRulesA', settings.audio.flexARules, 'Flex A');
+    renderRuleSet('audioRulesB', settings.audio.flexBRules, 'Flex B');
+    target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
+  }
+
+  $('addAudioRuleA').addEventListener('click', () => {
+    settings.audio.flexARules.push({ min: 0, max: 4095, text: 'Flex A baru' });
+    saveSettings(settings);
+    renderAudioRules();
+  });
+
+  $('addAudioRuleB').addEventListener('click', () => {
+    settings.audio.flexBRules.push({ min: 0, max: 4095, text: 'Flex B baru' });
     saveSettings(settings);
     renderAudioRules();
   });

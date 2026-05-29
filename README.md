@@ -14,11 +14,11 @@ Repository: https://github.com/triwahyu45/Flex-Sensor-Web-Simulator
 
 - **Servo**: Flex A mengontrol sudut servo 0-180 derajat jika bagan Servo ON.
 - **Arm Gripper**: Flex A menggeser arm, Flex B membuka/menutup gripper jika bagan Gripper ON.
-- **Grafik + Audio**: grafik realtime flex sensor berjalan dan threshold memicu suara jika bagan Grafik + Audio ON.
+- **Grafik + Audio**: grafik realtime flex sensor berjalan dan threshold Flex A + Flex B memicu suara jika bagan Grafik + Audio ON.
 
 Setiap modul punya kalibrasi sendiri. Min/max input bisa disesuaikan karena nilai analog flex sensor tiap hardware bisa berbeda. Contoh: jika sensor hanya bergerak dari 900 sampai 2600, isi input min/max modul dengan rentang tersebut agar visual tetap full-scale.
 
-Modul Grafik + Audio mendukung custom rules. Pilih sumber audio dari Flex A atau Flex B, lalu atur range dan teks suara. Rules disimpan di browser dengan `localStorage`.
+Modul Grafik + Audio mendukung custom rules untuk dua sensor sekaligus. Atur range dan teks untuk **Flex A** dan **Flex B**; jika dua-duanya cocok, teks digabung. Contoh: Flex A menghasilkan `Halo` dan Flex B menghasilkan `Aulia`, maka laptop mengucapkan `Halo Aulia`. Rules disimpan di browser dengan `localStorage`.
 
 ## Cara Pakai Lokal
 
@@ -82,10 +82,10 @@ Jika web dibuka dari GitHub Pages, firmware ESP32 perlu mengizinkan CORS:
 Access-Control-Allow-Origin: *
 ```
 
-`virtual-esp32.html` tetap ada sebagai hidden/dev sender saat hardware belum tersedia. Isi mDNS yang sama di trainer dan Virtual ESP32 agar data virtual hanya diterima oleh trainer yang cocok.
+`virtual-esp32.html` tetap ada sebagai hidden/dev sender saat hardware belum tersedia. Isi mDNS yang sama di trainer dan Virtual ESP32 agar data virtual hanya diterima oleh trainer yang cocok. Jika mDNS berbeda, Simulator menampilkan status merah `Disconnected - mDNS mismatch`.
 
 Halaman Virtual ESP32 juga menyediakan contoh sketch Arduino ESP32 yang bisa dicopy. Sketch contoh memakai `WiFi`, `WebServer`, `ESPmDNS`, endpoint `/data`, pin Flex A GPIO 34, dan Flex B GPIO 35.
-- `phrase` -> output suara untuk Voice Trainer.
+- `phrase` -> output suara gabungan dari rule Flex A dan Flex B.
 
 ## Deploy GitHub Pages
 

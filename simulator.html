@@ -132,7 +132,7 @@
         <article class="trainer-module" data-module-card="graphAudio">
           <div class="module-head">
             <div>
-              <span>Threshold Flex B</span>
+              <span>Threshold Flex A + Flex B</span>
               <h2>Modul Grafik & Suara</h2>
             </div>
             <label class="switch">
@@ -142,7 +142,6 @@
           </div>
           <canvas id="flexChart" class="chart" width="640" height="260" aria-label="Grafik realtime flex sensor"></canvas>
           <div class="settings-grid audio-settings">
-            <label><span>Audio Source</span><select id="audioSource"><option value="flexB">Flex B</option><option value="flexA">Flex A</option></select></label>
             <label><span>Graph Min</span><input id="graphMin" type="number" /></label>
             <label><span>Graph Max</span><input id="graphMax" type="number" /></label>
           </div>
@@ -151,11 +150,22 @@
             <button id="speakNow" class="small-action muted">Test Audio</button>
             <span id="voiceStatus">Audio off</span>
           </div>
-          <div class="rules-head">
-            <span>Custom suara</span>
-            <button id="addAudioRule" class="mini-action">Tambah</button>
+          <div class="dual-rules">
+            <section class="rule-panel">
+              <div class="rules-head">
+                <span>Flex A - range - teks</span>
+                <button id="addAudioRuleA" class="mini-action">Tambah</button>
+              </div>
+              <div class="threshold-list" id="audioRulesA"></div>
+            </section>
+            <section class="rule-panel">
+              <div class="rules-head">
+                <span>Flex B - range - teks</span>
+                <button id="addAudioRuleB" class="mini-action">Tambah</button>
+              </div>
+              <div class="threshold-list" id="audioRulesB"></div>
+            </section>
           </div>
-          <div class="threshold-list" id="audioRules"></div>
         </article>
       </section>
 
