@@ -1,5 +1,6 @@
 const CHANNEL_NAME = 'flex-trainer-realtime';
 const STORAGE_KEY = 'flex-trainer-payload';
+const DEVICE_KEY = 'flex-trainer-mdns';
 
 const defaults = {
   flexA: 2048,
@@ -8,6 +9,7 @@ const defaults = {
   servo: 90,
   grip: 0,
   phrase: 'Halo',
+  mdns: '',
   sentAt: Date.now(),
 };
 
@@ -27,7 +29,13 @@ function phraseFromFlex(flexB) {
   return 'Semangat';
 }
 
-function payloadFromFlex(flexA, flexB) {
+function normalizeMdns(value) {
+  const raw = String(value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  if (!raw) return '';
+  return raw.endsWith('.local') ? raw : `${raw}.local`;
+}
+
+function payloadFromFlex(flexA, flexB, mdns = '') {
   return {
     flexA: Math.round(flexA),
     flexB: Math.round(flexB),
@@ -35,6 +43,7 @@ function payloadFromFlex(flexA, flexB) {
     servo: round(map(flexA, 0, 4095, 0, 180), 1),
     grip: round(map(flexB, 0, 4095, 0, 100), 1),
     phrase: phraseFromFlex(flexB),
+    mdns: normalizeMdns(mdns),
     sentAt: Date.now(),
   };
 }
@@ -96,6 +105,10 @@ function initSimulator() {
     servoToggle: $('servoToggle'),
     gripperToggle: $('gripperToggle'),
     graphAudioToggle: $('graphAudioToggle'),
+    mdnsInput: $('mdnsInput'),
+    connectEsp: $('connectEsp'),
+    disconnectEsp: $('disconnectEsp'),
+    mdnsStatus: $('mdnsStatus'),
   };
 
   const modules = {
@@ -110,13 +123,67 @@ function initSimulator() {
   let lastGraphAt = 0;
   let target = readPayload();
   let current = { ...target };
+  let selectedMdns = normalizeMdns(localStorage.getItem(DEVICE_KEY));
+  let espPolling = false;
+  let pollTimer = null;
   const graph = Array.from({ length: 160 }, () => ({ flexA: current.flexA, flexB: current.flexB }));
   const ctx = refs.chart.getContext('2d');
 
-  createChannel((payload) => {
-    target = { ...defaults, ...payload };
-    refs.status.textContent = 'Live data';
+  refs.mdnsInput.value = selectedMdns.replace('.local', '');
+
+  function acceptPayload(payload, source = 'Virtual') {
+    const incomingMdns = normalizeMdns(payload?.mdns);
+    if (selectedMdns && incomingMdns && incomingMdns !== selectedMdns) return;
+    target = { ...defaults, ...payload, mdns: incomingMdns };
+    refs.status.textContent = source;
     refs.status.classList.add('live');
+  }
+
+  createChannel((payload) => acceptPayload(payload, 'Virtual data'));
+
+  function setConnectionStatus(text, state = '') {
+    refs.mdnsStatus.textContent = text;
+    refs.mdnsStatus.dataset.state = state;
+  }
+
+  async function pollEsp32() {
+    if (!espPolling || !selectedMdns) return;
+    try {
+      const response = await fetch(`http://${selectedMdns}/data`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (typeof data.flexA !== 'number' || typeof data.flexB !== 'number') {
+        throw new Error('Invalid payload');
+      }
+      acceptPayload(payloadFromFlex(data.flexA, data.flexB, selectedMdns), `ESP32 ${selectedMdns}`);
+      setConnectionStatus(`Connected: ${selectedMdns}`, 'connected');
+    } catch {
+      setConnectionStatus(`Error: ${selectedMdns}`, 'error');
+    } finally {
+      if (espPolling) pollTimer = window.setTimeout(pollEsp32, 120);
+    }
+  }
+
+  refs.connectEsp.addEventListener('click', () => {
+    selectedMdns = normalizeMdns(refs.mdnsInput.value);
+    refs.mdnsInput.value = selectedMdns.replace('.local', '');
+    localStorage.setItem(DEVICE_KEY, selectedMdns);
+    if (!selectedMdns) {
+      espPolling = false;
+      window.clearTimeout(pollTimer);
+      setConnectionStatus('Virtual/manual mode', 'idle');
+      return;
+    }
+    espPolling = true;
+    window.clearTimeout(pollTimer);
+    setConnectionStatus(`Connecting: ${selectedMdns}`, 'connecting');
+    pollEsp32();
+  });
+
+  refs.disconnectEsp.addEventListener('click', () => {
+    espPolling = false;
+    window.clearTimeout(pollTimer);
+    setConnectionStatus('Disconnected', 'idle');
   });
 
   function syncModuleState() {
@@ -252,13 +319,18 @@ function initVirtualEsp32() {
   const flexBRead = $('virtualFlexBRead');
   const fpsRead = $('fpsRead');
   const payloadPreview = $('payloadPreview');
+  const virtualMdnsInput = $('virtualMdnsInput');
   const channel = createChannel(() => {});
 
-  let payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value));
+  virtualMdnsInput.value = normalizeMdns(localStorage.getItem(DEVICE_KEY)).replace('.local', '');
+
+  let payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value), virtualMdnsInput.value);
   let lastSend = 0;
 
   function updatePayload() {
-    payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value));
+    const mdns = normalizeMdns(virtualMdnsInput.value);
+    localStorage.setItem(DEVICE_KEY, mdns);
+    payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value), mdns);
     flexARead.textContent = payload.flexA;
     flexBRead.textContent = payload.flexB;
     fpsRead.textContent = `${fpsInput.value} FPS`;
@@ -270,7 +342,7 @@ function initVirtualEsp32() {
     channel.send(payload);
   }
 
-  [flexAInput, flexBInput, fpsInput].forEach((input) => {
+  [flexAInput, flexBInput, fpsInput, virtualMdnsInput].forEach((input) => {
     input.addEventListener('input', sendNow);
   });
 

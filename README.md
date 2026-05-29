@@ -48,6 +48,37 @@ Buka dua tab tersebut bersamaan saat belum ada hardware. Geser slider di **Virtu
 
 - `flexA` -> servo 0-180 derajat dan posisi arm kiri-kanan.
 - `flexB` -> bukaan gripper dan threshold audio.
+
+## Koneksi ESP32 mDNS
+
+Setiap kelompok sebaiknya memakai mDNS unik, misalnya:
+
+- `flex-kelompok1.local`
+- `flex-kelompok2.local`
+- `flex-aulia.local`
+
+Di halaman trainer, isi box **ESP32 mDNS** dengan nama device tanpa `http://`, misalnya `flex-kelompok1`. Web akan membaca data dari:
+
+```text
+http://flex-kelompok1.local/data
+```
+
+Endpoint ESP32 perlu mengembalikan JSON:
+
+```json
+{
+  "flexA": 2048,
+  "flexB": 0
+}
+```
+
+Jika web dibuka dari GitHub Pages, firmware ESP32 perlu mengizinkan CORS:
+
+```text
+Access-Control-Allow-Origin: *
+```
+
+`virtual-esp32.html` tetap ada sebagai hidden/dev sender saat hardware belum tersedia. Isi mDNS yang sama di trainer dan Virtual ESP32 agar data virtual hanya diterima oleh trainer yang cocok.
 - `phrase` -> output suara untuk Voice Trainer.
 
 ## Deploy GitHub Pages

@@ -28,7 +28,7 @@ body {
 
 body[data-page="simulator"],
 body[data-page="virtual"] {
-  overflow: hidden;
+  overflow: auto;
 }
 
 a {
@@ -245,11 +245,71 @@ h1 {
 
 .kit-shell {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 8px;
   width: min(1440px, calc(100% - 20px));
-  height: calc(100vh - 62px);
+  min-height: calc(100vh - 62px);
   margin: 0 auto;
+}
+
+.connection-bar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto minmax(180px, 260px);
+  align-items: end;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.connection-bar label,
+.slider-row {
+  display: grid;
+  gap: 6px;
+}
+
+.connection-bar label span,
+.slider-row span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.text-input,
+.connection-bar input {
+  width: 100%;
+  min-height: 31px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: #08090a;
+  outline: none;
+}
+
+.connection-bar strong {
+  min-height: 31px;
+  display: grid;
+  align-items: center;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--panel-3);
+  font-size: 12px;
+}
+
+.connection-bar strong[data-state="connected"] {
+  color: var(--green);
+}
+
+.connection-bar strong[data-state="error"] {
+  color: #ff8b8b;
+}
+
+.connection-bar strong[data-state="connecting"] {
+  color: var(--yellow);
 }
 
 .module-grid {
@@ -261,7 +321,7 @@ h1 {
 
 .trainer-module {
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   padding: 9px;
 }
 
@@ -546,7 +606,7 @@ h1 {
   grid-template-columns: minmax(0, 1fr) 310px;
   gap: 10px;
   width: min(1440px, calc(100% - 20px));
-  height: calc(100vh - 62px);
+  min-height: calc(100vh - 62px);
   margin: 0 auto;
 }
 
@@ -675,16 +735,6 @@ h1 {
   gap: 10px;
 }
 
-.slider-row {
-  display: grid;
-  gap: 7px;
-}
-
-.slider-row span {
-  color: #d8dde3;
-  font-weight: 900;
-}
-
 input[type="range"] {
   width: 100%;
   accent-color: var(--cyan);
@@ -704,11 +754,6 @@ input[type="range"] {
 }
 
 @media (max-width: 1180px) {
-  body[data-page="simulator"],
-  body[data-page="virtual"] {
-    overflow: auto;
-  }
-
   .module-grid,
   .virtual-layout {
     grid-template-columns: 1fr;
@@ -733,6 +778,10 @@ input[type="range"] {
   .header-readout {
     justify-content: flex-start;
     text-align: left;
+  }
+
+  .connection-bar {
+    grid-template-columns: 1fr 1fr;
   }
 }
 

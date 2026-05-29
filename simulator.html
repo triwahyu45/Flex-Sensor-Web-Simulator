@@ -23,6 +23,16 @@
     </header>
 
     <main class="kit-shell">
+      <section class="connection-bar" aria-label="ESP32 connection">
+        <label>
+          <span>ESP32 mDNS</span>
+          <input id="mdnsInput" type="text" placeholder="flex-kelompok1" autocomplete="off" />
+        </label>
+        <button id="connectEsp" class="small-action">Connect</button>
+        <button id="disconnectEsp" class="small-action muted">Disconnect</button>
+        <strong id="mdnsStatus">Disconnected</strong>
+      </section>
+
       <section class="module-grid" aria-label="Trainer modules">
         <article class="trainer-module" data-module-card="servo">
           <div class="module-head">
