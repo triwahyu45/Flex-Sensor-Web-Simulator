@@ -16,10 +16,18 @@
           <small>Hidden dev sender</small>
         </span>
       </a>
-      <div class="status-dot live">Streaming</div>
+      <div class="status-dot live"><i class="led led-green"></i> Streaming</div>
     </header>
 
     <main class="virtual-layout">
+      <section class="sketch-panel">
+        <div class="panel-head compact">
+          <span>Program ESP32</span>
+          <button id="copySketch" class="small-action">Copy</button>
+        </div>
+        <pre id="espSketch" class="code-box"></pre>
+      </section>
+
       <section class="virtual-board">
         <div class="panel-head">
           <span>Analog Input Simulator</span>

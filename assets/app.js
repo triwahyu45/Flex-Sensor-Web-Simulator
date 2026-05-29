@@ -1,6 +1,7 @@
 const CHANNEL_NAME = 'flex-trainer-realtime';
 const STORAGE_KEY = 'flex-trainer-payload';
 const DEVICE_KEY = 'flex-trainer-mdns';
+const SETTINGS_KEY = 'flex-trainer-settings';
 
 const defaults = {
   flexA: 2048,
@@ -13,20 +14,35 @@ const defaults = {
   sentAt: Date.now(),
 };
 
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-const map = (value, inMin, inMax, outMin, outMax) => {
-  const ratio = clamp((value - inMin) / (inMax - inMin), 0, 1);
-  return outMin + ratio * (outMax - outMin);
+const defaultSettings = {
+  servo: { source: 'flexA', inMin: 0, inMax: 4095, outMin: 0, outMax: 180 },
+  gripper: { armSource: 'flexA', armInMin: 0, armInMax: 4095, gripSource: 'flexB', gripInMin: 0, gripInMax: 4095 },
+  audio: {
+    source: 'flexB',
+    graphMin: 0,
+    graphMax: 4095,
+    rules: [
+      { min: 0, max: 1364, text: 'Halo' },
+      { min: 1365, max: 2729, text: 'Apa kabar' },
+      { min: 2730, max: 4095, text: 'Semangat' },
+    ],
+  },
 };
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const round = (value, digits = 0) => {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
 };
+const numeric = (value, fallback = 0) => {
+  const next = Number(value);
+  return Number.isFinite(next) ? next : fallback;
+};
 
-function phraseFromFlex(flexB) {
-  if (flexB < 1365) return 'Halo';
-  if (flexB < 2730) return 'Apa kabar';
-  return 'Semangat';
+function mapCalibrated(value, inMin, inMax, outMin, outMax) {
+  if (inMax === inMin) return outMin;
+  const ratio = clamp((value - inMin) / (inMax - inMin), 0, 1);
+  return outMin + ratio * (outMax - outMin);
 }
 
 function normalizeMdns(value) {
@@ -35,14 +51,42 @@ function normalizeMdns(value) {
   return raw.endsWith('.local') ? raw : `${raw}.local`;
 }
 
-function payloadFromFlex(flexA, flexB, mdns = '') {
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+    return {
+      servo: { ...defaultSettings.servo, ...saved.servo },
+      gripper: { ...defaultSettings.gripper, ...saved.gripper },
+      audio: { ...defaultSettings.audio, ...saved.audio, rules: saved.audio?.rules || defaultSettings.audio.rules },
+    };
+  } catch {
+    return structuredClone(defaultSettings);
+  }
+}
+
+function saveSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function phraseFromFlex(value, settings) {
+  const rule = settings.audio.rules.find((item) => value >= numeric(item.min) && value <= numeric(item.max));
+  return rule?.text || '';
+}
+
+function payloadFromFlex(flexA, flexB, mdns = '', settings = loadSettings()) {
+  const flex = { flexA: numeric(flexA), flexB: numeric(flexB) };
+  const servoInput = flex[settings.servo.source] ?? flex.flexA;
+  const armInput = flex[settings.gripper.armSource] ?? flex.flexA;
+  const gripInput = flex[settings.gripper.gripSource] ?? flex.flexB;
+  const audioInput = flex[settings.audio.source] ?? flex.flexB;
+
   return {
-    flexA: Math.round(flexA),
-    flexB: Math.round(flexB),
-    pan: round(map(flexA, 0, 4095, -100, 100), 1),
-    servo: round(map(flexA, 0, 4095, 0, 180), 1),
-    grip: round(map(flexB, 0, 4095, 0, 100), 1),
-    phrase: phraseFromFlex(flexB),
+    flexA: Math.round(flex.flexA),
+    flexB: Math.round(flex.flexB),
+    pan: round(mapCalibrated(armInput, settings.gripper.armInMin, settings.gripper.armInMax, -100, 100), 1),
+    servo: round(mapCalibrated(servoInput, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax), 1),
+    grip: round(mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 0, 100), 1),
+    phrase: phraseFromFlex(audioInput, settings),
     mdns: normalizeMdns(mdns),
     sentAt: Date.now(),
   };
@@ -98,6 +142,7 @@ function initSimulator() {
     servoFlex: $('servoFlexRead'),
     activeModules: $('activeModulesRead'),
     status: $('connectionStatus'),
+    led: $('connectionLed'),
     chart: $('flexChart'),
     voiceStatus: $('voiceStatus'),
     enableVoice: $('enableVoice'),
@@ -109,8 +154,10 @@ function initSimulator() {
     connectEsp: $('connectEsp'),
     disconnectEsp: $('disconnectEsp'),
     mdnsStatus: $('mdnsStatus'),
+    mdnsLed: $('mdnsLed'),
   };
 
+  const settings = loadSettings();
   const modules = {
     servo: refs.servoToggle.checked,
     gripper: refs.gripperToggle.checked,
@@ -131,19 +178,54 @@ function initSimulator() {
 
   refs.mdnsInput.value = selectedMdns.replace('.local', '');
 
+  function setLed(element, state) {
+    element.className = `led led-${state}`;
+  }
+
+  function bindSetting(id, path, isNumber = false) {
+    const element = $(id);
+    const [section, key] = path;
+    element.value = settings[section][key];
+    element.addEventListener('input', () => {
+      settings[section][key] = isNumber ? numeric(element.value) : element.value;
+      saveSettings(settings);
+      target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
+      renderAudioRules();
+    });
+  }
+
+  [
+    ['servoSource', ['servo', 'source']],
+    ['servoInMin', ['servo', 'inMin'], true],
+    ['servoInMax', ['servo', 'inMax'], true],
+    ['servoOutMin', ['servo', 'outMin'], true],
+    ['servoOutMax', ['servo', 'outMax'], true],
+    ['armSource', ['gripper', 'armSource']],
+    ['armInMin', ['gripper', 'armInMin'], true],
+    ['armInMax', ['gripper', 'armInMax'], true],
+    ['gripSource', ['gripper', 'gripSource']],
+    ['gripInMin', ['gripper', 'gripInMin'], true],
+    ['gripInMax', ['gripper', 'gripInMax'], true],
+    ['audioSource', ['audio', 'source']],
+    ['graphMin', ['audio', 'graphMin'], true],
+    ['graphMax', ['audio', 'graphMax'], true],
+  ].forEach(([id, path, isNumber]) => bindSetting(id, path, isNumber));
+
   function acceptPayload(payload, source = 'Virtual') {
     const incomingMdns = normalizeMdns(payload?.mdns);
     if (selectedMdns && incomingMdns && incomingMdns !== selectedMdns) return;
-    target = { ...defaults, ...payload, mdns: incomingMdns };
-    refs.status.textContent = source;
-    refs.status.classList.add('live');
+    const rawFlexA = numeric(payload.flexA, defaults.flexA);
+    const rawFlexB = numeric(payload.flexB, defaults.flexB);
+    target = payloadFromFlex(rawFlexA, rawFlexB, incomingMdns, settings);
+    refs.status.innerHTML = `<i id="connectionLed" class="led led-green"></i> ${source}`;
+    refs.led = document.getElementById('connectionLed');
   }
 
   createChannel((payload) => acceptPayload(payload, 'Virtual data'));
 
-  function setConnectionStatus(text, state = '') {
-    refs.mdnsStatus.textContent = text;
-    refs.mdnsStatus.dataset.state = state;
+  function setConnectionStatus(text, state = 'red') {
+    refs.mdnsStatus.innerHTML = `<i id="mdnsLed" class="led led-${state}"></i> ${text}`;
+    refs.mdnsLed = document.getElementById('mdnsLed');
   }
 
   async function pollEsp32() {
@@ -152,13 +234,11 @@ function initSimulator() {
       const response = await fetch(`http://${selectedMdns}/data`, { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      if (typeof data.flexA !== 'number' || typeof data.flexB !== 'number') {
-        throw new Error('Invalid payload');
-      }
-      acceptPayload(payloadFromFlex(data.flexA, data.flexB, selectedMdns), `ESP32 ${selectedMdns}`);
-      setConnectionStatus(`Connected: ${selectedMdns}`, 'connected');
+      if (typeof data.flexA !== 'number' || typeof data.flexB !== 'number') throw new Error('Invalid payload');
+      acceptPayload({ flexA: data.flexA, flexB: data.flexB, mdns: selectedMdns }, `ESP32 ${selectedMdns}`);
+      setConnectionStatus(`Connected: ${selectedMdns}`, 'green');
     } catch {
-      setConnectionStatus(`Error: ${selectedMdns}`, 'error');
+      setConnectionStatus(`Error: ${selectedMdns}`, 'red');
     } finally {
       if (espPolling) pollTimer = window.setTimeout(pollEsp32, 120);
     }
@@ -171,19 +251,19 @@ function initSimulator() {
     if (!selectedMdns) {
       espPolling = false;
       window.clearTimeout(pollTimer);
-      setConnectionStatus('Virtual/manual mode', 'idle');
+      setConnectionStatus('Virtual/manual mode', 'yellow');
       return;
     }
     espPolling = true;
     window.clearTimeout(pollTimer);
-    setConnectionStatus(`Connecting: ${selectedMdns}`, 'connecting');
+    setConnectionStatus(`Connecting: ${selectedMdns}`, 'yellow');
     pollEsp32();
   });
 
   refs.disconnectEsp.addEventListener('click', () => {
     espPolling = false;
     window.clearTimeout(pollTimer);
-    setConnectionStatus('Disconnected', 'idle');
+    setConnectionStatus('Disconnected', 'red');
   });
 
   function syncModuleState() {
@@ -201,8 +281,49 @@ function initSimulator() {
   });
   syncModuleState();
 
+  function renderAudioRules() {
+    const container = $('audioRules');
+    container.innerHTML = '';
+    settings.audio.rules.forEach((rule, index) => {
+      const row = document.createElement('div');
+      row.className = 'rule-row';
+      row.innerHTML = `
+        <input type="number" value="${rule.min}" aria-label="Min suara" />
+        <input type="number" value="${rule.max}" aria-label="Max suara" />
+        <input type="text" value="${rule.text}" aria-label="Text suara" />
+        <button class="mini-action" type="button">Hapus</button>
+      `;
+      const [minInput, maxInput, textInput, deleteButton] = row.children;
+      minInput.addEventListener('input', () => {
+        rule.min = numeric(minInput.value);
+        saveSettings(settings);
+      });
+      maxInput.addEventListener('input', () => {
+        rule.max = numeric(maxInput.value);
+        saveSettings(settings);
+      });
+      textInput.addEventListener('input', () => {
+        rule.text = textInput.value;
+        saveSettings(settings);
+      });
+      deleteButton.addEventListener('click', () => {
+        settings.audio.rules.splice(index, 1);
+        saveSettings(settings);
+        renderAudioRules();
+      });
+      container.appendChild(row);
+    });
+  }
+
+  $('addAudioRule').addEventListener('click', () => {
+    settings.audio.rules.push({ min: 0, max: 4095, text: 'Suara baru' });
+    saveSettings(settings);
+    renderAudioRules();
+  });
+  renderAudioRules();
+
   function speak(text, force = false) {
-    if (!voiceEnabled || !modules.graphAudio || !('speechSynthesis' in window)) return;
+    if (!text || !voiceEnabled || !modules.graphAudio || !('speechSynthesis' in window)) return;
     const now = performance.now();
     if (!force && (text === lastPhrase || now - lastVoiceAt < 1500)) return;
     lastPhrase = text;
@@ -231,10 +352,10 @@ function initSimulator() {
     const width = refs.chart.width;
     const height = refs.chart.height;
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = '#08111f';
+    ctx.fillStyle = '#08090a';
     ctx.fillRect(0, 0, width, height);
 
-    ctx.strokeStyle = 'rgba(125, 162, 255, 0.16)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
     ctx.lineWidth = 1;
     for (let i = 1; i < 4; i += 1) {
       const y = (height / 4) * i;
@@ -244,23 +365,25 @@ function initSimulator() {
       ctx.stroke();
     }
 
+    const graphMin = numeric(settings.audio.graphMin);
+    const graphMax = numeric(settings.audio.graphMax, 4095);
     const drawLine = (key, color) => {
       ctx.strokeStyle = color;
       ctx.lineWidth = 3;
       ctx.beginPath();
       graph.forEach((point, index) => {
         const x = (index / (graph.length - 1)) * width;
-        const y = height - (point[key] / 4095) * height;
+        const normalized = clamp((point[key] - graphMin) / (graphMax - graphMin || 1), 0, 1);
+        const y = height - normalized * height;
         if (index === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
       ctx.stroke();
     };
 
-    drawLine('flexA', '#62e5ff');
-    drawLine('flexB', '#75f0b1');
-
-    ctx.fillStyle = '#90aec0';
+    drawLine('flexA', '#38d5e8');
+    drawLine('flexB', '#79e39f');
+    ctx.fillStyle = '#8e959d';
     ctx.font = '12px Inter, system-ui, sans-serif';
     ctx.fillText('Flex A', 12, 20);
     ctx.fillText('Flex B', 72, 20);
@@ -272,7 +395,7 @@ function initSimulator() {
     refs.flexA.textContent = current.flexA;
     refs.flexB.textContent = current.flexB;
     refs.headerFlex.textContent = `Flex A ${current.flexA} - Flex B ${current.flexB}`;
-    refs.servoFlex.textContent = current.flexA;
+    refs.servoFlex.textContent = current[settings.servo.source] ?? current.flexA;
 
     if (modules.servo) {
       current.servo += (target.servo - current.servo) * 0.8;
@@ -284,7 +407,7 @@ function initSimulator() {
       current.pan += (target.pan - current.pan) * 0.8;
       current.grip += (target.grip - current.grip) * 0.8;
       const panPx = current.pan * 2.05;
-      const jawAngle = map(current.grip, 0, 100, 0, 25);
+      const jawAngle = mapCalibrated(current.grip, 0, 100, 0, 25);
       refs.arm.style.transform = `translate3d(${panPx}px, 0, 0)`;
       refs.leftJaw.style.transform = `rotate(${-jawAngle}deg)`;
       refs.rightJaw.style.transform = `rotate(${jawAngle}deg)`;
@@ -303,11 +426,63 @@ function initSimulator() {
     requestAnimationFrame(draw);
   }
 
+  setConnectionStatus('Disconnected', 'red');
   refs.leftJaw.style.transformOrigin = '324px 306px';
   refs.rightJaw.style.transformOrigin = '436px 306px';
   drawChart();
   requestAnimationFrame(draw);
 }
+
+const sketch = `#include <WiFi.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+
+const char* ssid = "NAMA_WIFI";
+const char* password = "PASSWORD_WIFI";
+const char* mdnsName = "flex-kelompok1";
+
+const int FLEX_A_PIN = 34;
+const int FLEX_B_PIN = 35;
+
+WebServer server(80);
+
+void sendCors() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.sendHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+void handleData() {
+  int flexA = analogRead(FLEX_A_PIN);
+  int flexB = analogRead(FLEX_B_PIN);
+  String json = "{\\\"flexA\\\":" + String(flexA) + ",\\\"flexB\\\":" + String(flexB) + "}";
+  sendCors();
+  server.send(200, "application/json", json);
+}
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(300);
+    Serial.print(".");
+  }
+
+  if (MDNS.begin(mdnsName)) {
+    Serial.println("mDNS: http://" + String(mdnsName) + ".local/data");
+  }
+
+  server.on("/data", HTTP_OPTIONS, []() {
+    sendCors();
+    server.send(204);
+  });
+  server.on("/data", HTTP_GET, handleData);
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+}`;
 
 function initVirtualEsp32() {
   const $ = (id) => document.getElementById(id);
@@ -320,17 +495,27 @@ function initVirtualEsp32() {
   const fpsRead = $('fpsRead');
   const payloadPreview = $('payloadPreview');
   const virtualMdnsInput = $('virtualMdnsInput');
+  const espSketch = $('espSketch');
+  const copySketch = $('copySketch');
   const channel = createChannel(() => {});
+  const settings = loadSettings();
+
+  espSketch.textContent = sketch;
+  copySketch.addEventListener('click', async () => {
+    await navigator.clipboard?.writeText(sketch);
+    copySketch.textContent = 'Copied';
+    window.setTimeout(() => (copySketch.textContent = 'Copy'), 900);
+  });
 
   virtualMdnsInput.value = normalizeMdns(localStorage.getItem(DEVICE_KEY)).replace('.local', '');
 
-  let payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value), virtualMdnsInput.value);
+  let payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value), virtualMdnsInput.value, settings);
   let lastSend = 0;
 
   function updatePayload() {
     const mdns = normalizeMdns(virtualMdnsInput.value);
     localStorage.setItem(DEVICE_KEY, mdns);
-    payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value), mdns);
+    payload = payloadFromFlex(Number(flexAInput.value), Number(flexBInput.value), mdns, settings);
     flexARead.textContent = payload.flexA;
     flexBRead.textContent = payload.flexB;
     fpsRead.textContent = `${fpsInput.value} FPS`;

@@ -17,7 +17,7 @@
         </span>
       </a>
       <div class="header-readout">
-        <span id="connectionStatus">Waiting data</span>
+        <span class="led-status" id="connectionStatus"><i id="connectionLed"></i> Waiting data</span>
         <strong id="headerFlexRead">Flex A 2048 - Flex B 0</strong>
       </div>
     </header>
@@ -30,7 +30,7 @@
         </label>
         <button id="connectEsp" class="small-action">Connect</button>
         <button id="disconnectEsp" class="small-action muted">Disconnect</button>
-        <strong id="mdnsStatus">Disconnected</strong>
+        <strong id="mdnsStatus"><i class="led led-red" id="mdnsLed"></i> Disconnected</strong>
       </section>
 
       <section class="module-grid" aria-label="Trainer modules">
@@ -64,6 +64,13 @@
               <strong><span id="servoFlexRead">2048</span></strong>
               <small><span id="servoRead">90</span> deg</small>
             </div>
+          </div>
+          <div class="settings-grid">
+            <label><span>Input</span><select id="servoSource"><option value="flexA">Flex A</option><option value="flexB">Flex B</option></select></label>
+            <label><span>In Min</span><input id="servoInMin" type="number" /></label>
+            <label><span>In Max</span><input id="servoInMax" type="number" /></label>
+            <label><span>Out Min</span><input id="servoOutMin" type="number" /></label>
+            <label><span>Out Max</span><input id="servoOutMax" type="number" /></label>
           </div>
         </article>
 
@@ -112,6 +119,14 @@
               <small>Flex B</small>
             </div>
           </div>
+          <div class="settings-grid gripper-settings">
+            <label><span>Arm Input</span><select id="armSource"><option value="flexA">Flex A</option><option value="flexB">Flex B</option></select></label>
+            <label><span>Arm Min</span><input id="armInMin" type="number" /></label>
+            <label><span>Arm Max</span><input id="armInMax" type="number" /></label>
+            <label><span>Grip Input</span><select id="gripSource"><option value="flexB">Flex B</option><option value="flexA">Flex A</option></select></label>
+            <label><span>Grip Min</span><input id="gripInMin" type="number" /></label>
+            <label><span>Grip Max</span><input id="gripInMax" type="number" /></label>
+          </div>
         </article>
 
         <article class="trainer-module" data-module-card="graphAudio">
@@ -126,16 +141,21 @@
             </label>
           </div>
           <canvas id="flexChart" class="chart" width="640" height="260" aria-label="Grafik realtime flex sensor"></canvas>
+          <div class="settings-grid audio-settings">
+            <label><span>Audio Source</span><select id="audioSource"><option value="flexB">Flex B</option><option value="flexA">Flex A</option></select></label>
+            <label><span>Graph Min</span><input id="graphMin" type="number" /></label>
+            <label><span>Graph Max</span><input id="graphMax" type="number" /></label>
+          </div>
           <div class="voice-row">
             <button id="enableVoice" class="small-action">Enable Voice</button>
             <button id="speakNow" class="small-action muted">Test Audio</button>
             <span id="voiceStatus">Audio off</span>
           </div>
-          <div class="threshold-list">
-            <span>0-1364: Halo</span>
-            <span>1365-2729: Apa kabar</span>
-            <span>2730-4095: Semangat</span>
+          <div class="rules-head">
+            <span>Custom suara</span>
+            <button id="addAudioRule" class="mini-action">Tambah</button>
           </div>
+          <div class="threshold-list" id="audioRules"></div>
         </article>
       </section>
 
