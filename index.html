@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#061325" />
+    <meta name="theme-color" content="#08111f" />
     <title>Flex Sensor Trainer Kit</title>
     <link rel="stylesheet" href="assets/styles.css" />
   </head>
@@ -14,30 +14,28 @@
         <h1>Flex Sensor Trainer Kit</h1>
         <p>
           Web statis ringan untuk latihan mapping flex sensor ke servo, arm gripper,
-          dan output suara laptop. Simulator utama dan Virtual ESP32 dipisah agar
-          alur praktiknya bersih.
+          grafik realtime, dan output suara laptop dalam satu halaman trainer kit.
         </p>
         <div class="home-actions">
-          <a class="primary-link" href="simulator.html">Buka Simulator</a>
-          <a class="secondary-link" href="virtual-esp32.html">Buka Virtual ESP32</a>
+          <a class="primary-link" href="simulator.html">Buka Trainer Kit</a>
         </div>
       </section>
 
       <section class="mode-cards" aria-label="Trainer modes">
         <article>
           <span>01</span>
-          <h2>Servo Trainer</h2>
-          <p>Flex B mengontrol sudut servo 0-180 derajat dan buka-tutup gripper.</p>
+          <h2>Servo</h2>
+          <p>Flex A mengontrol sudut servo 0-180 derajat saat bagan servo ON.</p>
         </article>
         <article>
           <span>02</span>
-          <h2>Arm Trainer</h2>
-          <p>Flex A menggeser arm/gripper kiri-kanan seperti trainer kit aktuator.</p>
+          <h2>Arm Gripper</h2>
+          <p>Flex A menggeser arm, Flex B membuka dan menutup gripper.</p>
         </article>
         <article>
           <span>03</span>
-          <h2>Voice Trainer</h2>
-          <p>Nilai analog memicu suara “Halo”, “Apa kabar”, dan “Semangat”.</p>
+          <h2>Grafik + Audio</h2>
+          <p>Grafik flex berjalan realtime dan threshold memicu output suara.</p>
         </article>
       </section>
     </main>

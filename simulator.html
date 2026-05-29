@@ -3,93 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#061325" />
-    <title>Flex Sensor Simulator</title>
+    <meta name="theme-color" content="#08111f" />
+    <title>Flex Sensor Trainer Kit</title>
     <link rel="stylesheet" href="assets/styles.css" />
   </head>
   <body data-page="simulator">
-    <header class="topbar">
+    <header class="trainer-header">
       <a class="brand" href="index.html">
         <span class="brand-mark">FS</span>
         <span>
-          <strong>Flex Sensor Trainer</strong>
-          <small>Realtime simulator</small>
+          <strong>Flex Sensor Trainer Kit</strong>
+          <small>ESP32 realtime dashboard</small>
         </span>
       </a>
-      <nav class="topnav" aria-label="Halaman">
-        <a class="active" href="simulator.html">Simulator</a>
-        <a href="virtual-esp32.html">Virtual ESP32</a>
-      </nav>
-      <div class="status-dot" id="connectionStatus">Waiting data</div>
+      <div class="header-readout">
+        <span id="connectionStatus">Waiting data</span>
+        <strong id="headerFlexRead">Flex A 2048 · Flex B 0</strong>
+      </div>
     </header>
 
-    <main class="trainer-layout">
-      <section class="stage-panel">
-        <div class="panel-head">
-          <span>Live Gripper Stage</span>
-          <strong id="activeModeTitle">Servo Trainer</strong>
+    <main class="kit-shell">
+      <section class="overview-panel">
+        <div>
+          <span class="eyebrow">Trainer Kit Panel</span>
+          <h1>Sensor masuk, aktuator merespon.</h1>
         </div>
-
-        <div class="mode-tabs" role="tablist" aria-label="Mode trainer">
-          <button class="active" data-mode="servo">Servo Trainer</button>
-          <button data-mode="arm">Arm Trainer</button>
-          <button data-mode="voice">Voice Trainer</button>
-        </div>
-
-        <div class="gripper-stage" aria-label="Visual gripper menghadap bawah">
-          <div class="travel-rail"></div>
-          <div class="travel-label left">LEFT</div>
-          <div class="travel-label right">RIGHT</div>
-          <svg class="gripper-svg" viewBox="0 0 760 470" role="img" aria-label="Arm gripper controlled by flex sensors">
-            <g id="armGroup">
-              <line class="drop-cable" x1="380" y1="35" x2="380" y2="118" />
-              <rect class="servo-box" x="322" y="112" width="116" height="72" rx="12" />
-              <circle class="servo-hub" cx="380" cy="148" r="19" />
-              <rect class="arm-neck" x="362" y="180" width="36" height="94" rx="14" />
-              <rect class="palm" x="300" y="266" width="160" height="42" rx="12" />
-              <g id="leftJaw">
-                <path class="jaw" d="M322 300 L262 338 L246 420 L288 420 L304 362 L354 330 Z" />
-                <circle class="joint-dot" cx="324" cy="306" r="8" />
-              </g>
-              <g id="rightJaw">
-                <path class="jaw" d="M438 300 L498 338 L514 420 L472 420 L456 362 L406 330 Z" />
-                <circle class="joint-dot" cx="436" cy="306" r="8" />
-              </g>
-            </g>
-          </svg>
-        </div>
-
-        <div class="readout-strip">
-          <div>
-            <span>Flex A</span>
-            <strong id="flexARead">0</strong>
-            <small>arm kiri-kanan</small>
-          </div>
-          <div>
-            <span>Flex B</span>
-            <strong id="flexBRead">0</strong>
-            <small>grip/servo</small>
-          </div>
-          <div>
-            <span>Arm Position</span>
-            <strong id="panRead">0%</strong>
-            <small>travel</small>
-          </div>
-          <div>
-            <span>Grip</span>
-            <strong id="gripRead">0%</strong>
-            <small>buka-tutup</small>
-          </div>
-        </div>
+        <p>
+          Tiga bagan di bawah bisa dinyalakan bersamaan atau sendiri-sendiri.
+          Virtual ESP32 hanya alat bantu tersembunyi untuk testing saat hardware belum ada.
+        </p>
       </section>
 
-      <aside class="trainer-side">
-        <section class="instrument-panel">
-          <div class="panel-head compact">
-            <span>Servo Gauge</span>
-            <strong><span id="servoRead">0</span>°</strong>
+      <section class="module-grid" aria-label="Trainer modules">
+        <article class="trainer-module" data-module-card="servo">
+          <div class="module-head">
+            <div>
+              <span>Bagan 1</span>
+              <h2>Servo</h2>
+            </div>
+            <label class="switch">
+              <input id="servoToggle" type="checkbox" checked />
+              <span></span>
+            </label>
           </div>
-          <div class="gauge">
+          <div class="servo-card">
             <svg viewBox="0 0 300 180" aria-label="Servo gauge 0 sampai 180 derajat">
               <path class="gauge-arc" d="M38 150 A112 112 0 0 1 262 150" />
               <path class="gauge-line" d="M62 150 A88 88 0 0 1 238 150" />
@@ -103,34 +60,103 @@
               <line id="needle" class="needle" x1="150" y1="150" x2="150" y2="60" />
               <circle class="needle-hub" cx="150" cy="150" r="12" />
             </svg>
+            <div class="metric-row">
+              <span>Flex A</span>
+              <strong><span id="servoFlexRead">2048</span></strong>
+              <small><span id="servoRead">90</span> derajat</small>
+            </div>
           </div>
-        </section>
+        </article>
 
-        <section class="instrument-panel">
-          <div class="panel-head compact">
-            <span>Mode Focus</span>
+        <article class="trainer-module" data-module-card="gripper">
+          <div class="module-head">
+            <div>
+              <span>Bagan 2</span>
+              <h2>Arm Gripper</h2>
+            </div>
+            <label class="switch">
+              <input id="gripperToggle" type="checkbox" />
+              <span></span>
+            </label>
           </div>
-          <p id="modeDescription" class="mode-description">
-            Flex B mengontrol servo dan bukaan gripper secara realtime.
-          </p>
-          <div class="voice-box">
+          <div class="gripper-stage" aria-label="Visual gripper menghadap bawah">
+            <div class="travel-rail"></div>
+            <div class="travel-label left">LEFT</div>
+            <div class="travel-label right">RIGHT</div>
+            <svg class="gripper-svg" viewBox="0 0 760 470" role="img" aria-label="Arm gripper controlled by flex sensors">
+              <g id="armGroup">
+                <line class="drop-cable" x1="380" y1="35" x2="380" y2="118" />
+                <rect class="servo-box" x="322" y="112" width="116" height="72" rx="12" />
+                <circle class="servo-hub" cx="380" cy="148" r="19" />
+                <rect class="arm-neck" x="362" y="180" width="36" height="94" rx="14" />
+                <rect class="palm" x="300" y="266" width="160" height="42" rx="12" />
+                <g id="leftJaw">
+                  <path class="jaw" d="M322 300 L262 338 L246 420 L288 420 L304 362 L354 330 Z" />
+                  <circle class="joint-dot" cx="324" cy="306" r="8" />
+                </g>
+                <g id="rightJaw">
+                  <path class="jaw" d="M438 300 L498 338 L514 420 L472 420 L456 362 L406 330 Z" />
+                  <circle class="joint-dot" cx="436" cy="306" r="8" />
+                </g>
+              </g>
+            </svg>
+          </div>
+          <div class="metric-pair">
+            <div>
+              <span>Arm</span>
+              <strong id="panRead">0%</strong>
+              <small>Flex A</small>
+            </div>
+            <div>
+              <span>Grip</span>
+              <strong id="gripRead">0%</strong>
+              <small>Flex B</small>
+            </div>
+          </div>
+        </article>
+
+        <article class="trainer-module" data-module-card="graphAudio">
+          <div class="module-head">
+            <div>
+              <span>Bagan 3</span>
+              <h2>Grafik + Audio</h2>
+            </div>
+            <label class="switch">
+              <input id="graphAudioToggle" type="checkbox" />
+              <span></span>
+            </label>
+          </div>
+          <canvas id="flexChart" class="chart" width="640" height="260" aria-label="Grafik realtime flex sensor"></canvas>
+          <div class="voice-row">
             <button id="enableVoice" class="small-action">Enable Voice</button>
             <button id="speakNow" class="small-action muted">Test Speak</button>
-            <span id="voiceStatus">Voice off</span>
+            <span id="voiceStatus">Audio off</span>
           </div>
-        </section>
+          <div class="threshold-list">
+            <span>0-1364: Halo</span>
+            <span>1365-2729: Apa kabar</span>
+            <span>2730-4095: Semangat</span>
+          </div>
+        </article>
+      </section>
 
-        <section class="instrument-panel">
-          <div class="panel-head compact">
-            <span>Mapping</span>
-          </div>
-          <div class="mapping-list">
-            <p><strong>Flex A</strong><span>0-4095 → arm -100% sampai 100%</span></p>
-            <p><strong>Flex B</strong><span>0-4095 → servo 0-180° dan grip 0-100%</span></p>
-            <p><strong>Voice</strong><span>threshold analog: Halo, Apa kabar, Semangat</span></p>
-          </div>
-        </section>
-      </aside>
+      <section class="readout-strip">
+        <div>
+          <span>Flex A</span>
+          <strong id="flexARead">2048</strong>
+          <small>servo + arm position</small>
+        </div>
+        <div>
+          <span>Flex B</span>
+          <strong id="flexBRead">0</strong>
+          <small>grip + audio threshold</small>
+        </div>
+        <div>
+          <span>Active Modules</span>
+          <strong id="activeModulesRead">1</strong>
+          <small>ON/OFF trainer</small>
+        </div>
+      </section>
     </main>
 
     <script src="assets/app.js"></script>

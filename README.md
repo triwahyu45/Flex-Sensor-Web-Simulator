@@ -7,14 +7,14 @@ Repository: https://github.com/triwahyu45/Flex-Sensor-Web-Simulator
 ## Halaman
 
 - `index.html` - menu utama trainer kit.
-- `simulator.html` - dashboard simulator utama.
-- `virtual-esp32.html` - pengirim data virtual saat ESP32 belum tersedia.
+- `simulator.html` - halaman utama trainer kit satu page.
+- `virtual-esp32.html` - hidden/dev sender saat ESP32 belum tersedia.
 
 ## Mode Trainer
 
-- **Servo Trainer**: Flex B mengontrol sudut servo 0-180 derajat dan bukaan gripper.
-- **Arm Trainer**: Flex A menggeser gripper kiri-kanan.
-- **Voice Trainer**: nilai analog memicu suara “Halo”, “Apa kabar”, dan “Semangat”.
+- **Servo**: Flex A mengontrol sudut servo 0-180 derajat jika bagan Servo ON.
+- **Arm Gripper**: Flex A menggeser arm, Flex B membuka/menutup gripper jika bagan Gripper ON.
+- **Grafik + Audio**: grafik realtime flex sensor berjalan dan threshold memicu suara jika bagan Grafik + Audio ON.
 
 ## Cara Pakai Lokal
 
@@ -29,9 +29,9 @@ python -m http.server 5173
 Lalu buka:
 
 - `http://127.0.0.1:5173/simulator.html`
-- `http://127.0.0.1:5173/virtual-esp32.html`
+- `http://127.0.0.1:5173/virtual-esp32.html` untuk testing tersembunyi tanpa ESP32.
 
-Buka dua tab tersebut bersamaan. Geser slider di **Virtual ESP32**, lalu simulator akan menerima data realtime melalui `BroadcastChannel` dengan fallback `localStorage`.
+Buka dua tab tersebut bersamaan saat belum ada hardware. Geser slider di **Virtual ESP32**, lalu trainer kit menerima data realtime melalui `BroadcastChannel` dengan fallback `localStorage`.
 
 ## Mapping Data
 
@@ -46,8 +46,8 @@ Buka dua tab tersebut bersamaan. Geser slider di **Virtual ESP32**, lalu simulat
 }
 ```
 
-- `flexA` -> posisi arm/gripper kiri-kanan.
-- `flexB` -> servo 0-180 derajat dan bukaan gripper.
+- `flexA` -> servo 0-180 derajat dan posisi arm kiri-kanan.
+- `flexB` -> bukaan gripper dan threshold audio.
 - `phrase` -> output suara untuk Voice Trainer.
 
 ## Deploy GitHub Pages
