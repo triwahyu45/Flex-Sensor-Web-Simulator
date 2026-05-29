@@ -204,7 +204,7 @@ function initSimulator() {
     current.flexB = target.flexB;
     refs.flexA.textContent = current.flexA;
     refs.flexB.textContent = current.flexB;
-    refs.headerFlex.textContent = `Flex A ${current.flexA} · Flex B ${current.flexB}`;
+    refs.headerFlex.textContent = `Flex A ${current.flexA} - Flex B ${current.flexB}`;
     refs.servoFlex.textContent = current.flexA;
 
     if (modules.servo) {

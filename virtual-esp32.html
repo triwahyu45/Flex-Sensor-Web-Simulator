@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#061325" />
+    <meta name="theme-color" content="#050506" />
     <title>Virtual ESP32</title>
     <link rel="stylesheet" href="assets/styles.css" />
   </head>
@@ -13,7 +13,7 @@
         <span class="brand-mark">32</span>
         <span>
           <strong>Virtual ESP32</strong>
-          <small>Pengirim data pengganti hardware</small>
+          <small>Hidden dev sender</small>
         </span>
       </a>
       <div class="status-dot live">Streaming</div>
@@ -29,7 +29,7 @@
           <div class="sensor-card sensor-a">
             <span>Flex A</span>
             <strong id="virtualFlexARead">2048</strong>
-            <small>arm kiri-kanan</small>
+            <small>servo + arm</small>
           </div>
           <div class="board">
             <div class="usb"></div>
@@ -41,7 +41,7 @@
           <div class="sensor-card sensor-b">
             <span>Flex B</span>
             <strong id="virtualFlexBRead">0</strong>
-            <small>grip / servo</small>
+            <small>grip + audio</small>
           </div>
         </div>
       </section>
@@ -50,10 +50,10 @@
         <section class="instrument-panel">
           <div class="panel-head compact">
             <span>Flex Sensor A</span>
-            <strong>Arm</strong>
+            <strong>Servo + Arm</strong>
           </div>
           <label class="slider-row">
-            <span>Kiri ↔ Kanan</span>
+            <span>Kiri &lt;-&gt; Kanan</span>
             <input id="flexAInput" type="range" min="0" max="4095" value="2048" />
           </label>
         </section>
@@ -61,10 +61,10 @@
         <section class="instrument-panel">
           <div class="panel-head compact">
             <span>Flex Sensor B</span>
-            <strong>Grip</strong>
+            <strong>Grip + Audio</strong>
           </div>
           <label class="slider-row">
-            <span>Buka ↔ Tutup</span>
+            <span>Buka &lt;-&gt; Tutup</span>
             <input id="flexBInput" type="range" min="0" max="4095" value="0" />
           </label>
         </section>
@@ -78,7 +78,7 @@
             <span>Send Rate</span>
             <input id="fpsInput" type="range" min="15" max="60" step="15" value="60" />
           </label>
-          <button id="centerInputs" class="small-action full">Center Arm + Open Grip</button>
+          <button id="centerInputs" class="small-action full">Center + Open</button>
           <pre id="payloadPreview" class="payload-preview"></pre>
         </section>
       </aside>

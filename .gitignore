@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .vite/
+.chrome-shot-profile/
 .dev-server.pid
 .dev-server.log
 vite-out.log

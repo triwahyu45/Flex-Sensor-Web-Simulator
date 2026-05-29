@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#08111f" />
+    <meta name="theme-color" content="#050506" />
     <title>Flex Sensor Trainer Kit</title>
     <link rel="stylesheet" href="assets/styles.css" />
   </head>
@@ -13,33 +13,22 @@
         <span class="brand-mark">FS</span>
         <span>
           <strong>Flex Sensor Trainer Kit</strong>
-          <small>ESP32 realtime dashboard</small>
+          <small>ESP32 realtime trainer</small>
         </span>
       </a>
       <div class="header-readout">
         <span id="connectionStatus">Waiting data</span>
-        <strong id="headerFlexRead">Flex A 2048 · Flex B 0</strong>
+        <strong id="headerFlexRead">Flex A 2048 - Flex B 0</strong>
       </div>
     </header>
 
     <main class="kit-shell">
-      <section class="overview-panel">
-        <div>
-          <span class="eyebrow">Trainer Kit Panel</span>
-          <h1>Sensor masuk, aktuator merespon.</h1>
-        </div>
-        <p>
-          Tiga bagan di bawah bisa dinyalakan bersamaan atau sendiri-sendiri.
-          Virtual ESP32 hanya alat bantu tersembunyi untuk testing saat hardware belum ada.
-        </p>
-      </section>
-
       <section class="module-grid" aria-label="Trainer modules">
         <article class="trainer-module" data-module-card="servo">
           <div class="module-head">
             <div>
-              <span>Bagan 1</span>
-              <h2>Servo</h2>
+              <span>Flex A ke 0-180 deg</span>
+              <h2>Modul Motor Servo</h2>
             </div>
             <label class="switch">
               <input id="servoToggle" type="checkbox" checked />
@@ -63,7 +52,7 @@
             <div class="metric-row">
               <span>Flex A</span>
               <strong><span id="servoFlexRead">2048</span></strong>
-              <small><span id="servoRead">90</span> derajat</small>
+              <small><span id="servoRead">90</span> deg</small>
             </div>
           </div>
         </article>
@@ -71,8 +60,8 @@
         <article class="trainer-module" data-module-card="gripper">
           <div class="module-head">
             <div>
-              <span>Bagan 2</span>
-              <h2>Arm Gripper</h2>
+              <span>Flex A posisi - Flex B grip</span>
+              <h2>Modul Gripper</h2>
             </div>
             <label class="switch">
               <input id="gripperToggle" type="checkbox" />
@@ -81,8 +70,8 @@
           </div>
           <div class="gripper-stage" aria-label="Visual gripper menghadap bawah">
             <div class="travel-rail"></div>
-            <div class="travel-label left">LEFT</div>
-            <div class="travel-label right">RIGHT</div>
+            <div class="travel-label left">KIRI</div>
+            <div class="travel-label right">KANAN</div>
             <svg class="gripper-svg" viewBox="0 0 760 470" role="img" aria-label="Arm gripper controlled by flex sensors">
               <g id="armGroup">
                 <line class="drop-cable" x1="380" y1="35" x2="380" y2="118" />
@@ -118,8 +107,8 @@
         <article class="trainer-module" data-module-card="graphAudio">
           <div class="module-head">
             <div>
-              <span>Bagan 3</span>
-              <h2>Grafik + Audio</h2>
+              <span>Threshold Flex B</span>
+              <h2>Modul Grafik & Suara</h2>
             </div>
             <label class="switch">
               <input id="graphAudioToggle" type="checkbox" />
@@ -129,7 +118,7 @@
           <canvas id="flexChart" class="chart" width="640" height="260" aria-label="Grafik realtime flex sensor"></canvas>
           <div class="voice-row">
             <button id="enableVoice" class="small-action">Enable Voice</button>
-            <button id="speakNow" class="small-action muted">Test Speak</button>
+            <button id="speakNow" class="small-action muted">Test Audio</button>
             <span id="voiceStatus">Audio off</span>
           </div>
           <div class="threshold-list">
@@ -144,15 +133,15 @@
         <div>
           <span>Flex A</span>
           <strong id="flexARead">2048</strong>
-          <small>servo + arm position</small>
+          <small>servo + posisi arm</small>
         </div>
         <div>
           <span>Flex B</span>
           <strong id="flexBRead">0</strong>
-          <small>grip + audio threshold</small>
+          <small>grip + suara</small>
         </div>
         <div>
-          <span>Active Modules</span>
+          <span>Modul ON</span>
           <strong id="activeModulesRead">1</strong>
           <small>ON/OFF trainer</small>
         </div>
