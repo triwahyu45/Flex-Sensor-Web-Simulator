@@ -27,6 +27,11 @@ body {
   background: var(--bg);
 }
 
+body[data-page="simulator"],
+body[data-page="virtual"] {
+  overflow: hidden;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -40,19 +45,19 @@ input {
 .trainer-header,
 .topbar {
   display: grid;
-  grid-template-columns: minmax(220px, 360px) 1fr;
+  grid-template-columns: minmax(210px, 320px) 1fr;
   align-items: center;
-  gap: 14px;
-  width: min(1440px, calc(100% - 28px));
-  margin: 14px auto;
-  padding: 12px;
+  gap: 10px;
+  width: min(1440px, calc(100% - 20px));
+  margin: 10px auto;
+  padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #0a1626;
 }
 
 .topbar {
-  grid-template-columns: minmax(220px, 320px) 1fr auto;
+  grid-template-columns: minmax(210px, 320px) 1fr;
 }
 
 .brand {
@@ -64,8 +69,8 @@ input {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   color: var(--cyan);
@@ -91,7 +96,11 @@ input {
 
 .brand small {
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 11px;
+}
+
+.brand strong {
+  font-size: 14px;
 }
 
 .header-readout {
@@ -103,11 +112,11 @@ input {
 }
 
 .header-readout span {
-  padding: 8px 10px;
+  padding: 6px 9px;
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--yellow);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   background: var(--panel-3);
 }
@@ -118,7 +127,7 @@ input {
 
 .header-readout strong {
   color: #d7ecf6;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .topnav {
@@ -153,12 +162,12 @@ input {
 
 .status-dot {
   min-width: 126px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--green);
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   background: var(--panel-3);
 }
@@ -186,16 +195,16 @@ input {
 }
 
 h1 {
-  margin: 8px 0 14px;
-  font-size: clamp(38px, 6vw, 72px);
-  line-height: 0.98;
+  margin: 4px 0 8px;
+  font-size: clamp(26px, 3vw, 42px);
+  line-height: 1;
 }
 
 .home-hero p,
 .overview-panel p {
   max-width: 760px;
-  font-size: clamp(15px, 1.8vw, 18px);
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .home-actions {
@@ -246,17 +255,21 @@ h1 {
 }
 
 .kit-shell {
-  width: min(1440px, calc(100% - 28px));
-  margin: 0 auto 20px;
+  width: min(1440px, calc(100% - 20px));
+  height: calc(100vh - 64px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 10px;
 }
 
 .overview-panel {
   display: grid;
-  grid-template-columns: minmax(280px, 520px) 1fr;
-  gap: 18px;
-  align-items: end;
-  padding: 18px;
-  margin-bottom: 14px;
+  grid-template-columns: minmax(240px, 430px) 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 0;
 }
 
 .overview-panel h1 {
@@ -270,8 +283,9 @@ h1 {
 }
 
 .trainer-module {
-  padding: 15px;
-  min-height: 420px;
+  padding: 10px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .module-head {
@@ -279,7 +293,16 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+}
+
+.module-head span {
+  font-size: 11px;
+}
+
+.mode-cards h2,
+.module-head h2 {
+  font-size: 17px;
 }
 
 .module-off {
@@ -289,8 +312,8 @@ h1 {
 .switch {
   position: relative;
   display: inline-flex;
-  width: 54px;
-  height: 30px;
+  width: 46px;
+  height: 25px;
 }
 
 .switch input {
@@ -310,10 +333,10 @@ h1 {
 .switch span::after {
   content: "";
   position: absolute;
-  top: 5px;
-  left: 6px;
-  width: 20px;
-  height: 20px;
+  top: 4px;
+  left: 5px;
+  width: 17px;
+  height: 17px;
   border-radius: 999px;
   background: var(--muted);
   transition: transform 120ms ease, background 120ms ease;
@@ -325,14 +348,15 @@ h1 {
 }
 
 .switch input:checked + span::after {
-  transform: translateX(21px);
+  transform: translateX(18px);
   background: var(--cyan);
 }
 
 .servo-card {
   display: grid;
   align-content: center;
-  min-height: 330px;
+  min-height: 0;
+  height: calc(100% - 44px);
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   background: var(--panel-3);
@@ -342,6 +366,7 @@ h1 {
 .gauge svg {
   display: block;
   width: 100%;
+  max-height: 210px;
 }
 
 .gauge-arc {
@@ -358,7 +383,7 @@ h1 {
 
 .ticks text {
   fill: #9eb7c8;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   text-anchor: middle;
 }
@@ -380,8 +405,8 @@ h1 {
 .metric-row,
 .metric-pair {
   display: grid;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 8px;
 }
 
 .metric-row {
@@ -394,7 +419,7 @@ h1 {
 .readout-strip span,
 .threshold-list span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -402,7 +427,7 @@ h1 {
 .metric-pair strong,
 .readout-strip strong {
   color: var(--text);
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: clamp(18px, 2vw, 24px);
 }
 
 .metric-row small {
@@ -412,7 +437,8 @@ h1 {
 .gripper-stage {
   position: relative;
   overflow: hidden;
-  min-height: 318px;
+  min-height: 0;
+  height: calc(100% - 90px);
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   background: var(--panel-3);
@@ -422,14 +448,14 @@ h1 {
   position: absolute;
   left: 10%;
   right: 10%;
-  top: 55px;
+  top: 42px;
   height: 2px;
   background: var(--line);
 }
 
 .travel-label {
   position: absolute;
-  top: 28px;
+  top: 20px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 900;
@@ -445,7 +471,7 @@ h1 {
 
 .gripper-svg {
   width: 100%;
-  height: 318px;
+  height: 100%;
 }
 
 #armGroup,
@@ -472,12 +498,12 @@ h1 {
 
 .metric-pair {
   grid-template-columns: repeat(2, 1fr);
-  margin-top: 10px;
+  margin-top: 8px;
   padding: 0;
 }
 
 .metric-pair div {
-  padding: 12px;
+  padding: 8px;
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   background: var(--panel-3);
@@ -485,7 +511,8 @@ h1 {
 
 .chart {
   width: 100%;
-  height: 260px;
+  height: calc(100% - 126px);
+  min-height: 170px;
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   background: var(--panel-3);
@@ -494,8 +521,8 @@ h1 {
 .voice-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin-top: 12px;
+  gap: 7px;
+  margin-top: 8px;
 }
 
 .voice-row span {
@@ -503,7 +530,7 @@ h1 {
 }
 
 .small-action {
-  min-height: 40px;
+  min-height: 34px;
   color: var(--cyan);
   font-weight: 900;
   cursor: pointer;
@@ -515,12 +542,12 @@ h1 {
 
 .threshold-list {
   display: grid;
-  gap: 6px;
-  margin-top: 12px;
+  gap: 5px;
+  margin-top: 8px;
 }
 
 .threshold-list span {
-  padding: 8px 10px;
+  padding: 6px 8px;
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   background: var(--panel-3);
@@ -529,12 +556,12 @@ h1 {
 .readout-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-top: 14px;
+  gap: 10px;
+  margin-top: 0;
 }
 
 .readout-strip div {
-  padding: 14px;
+  padding: 9px 10px;
 }
 
 .readout-strip span,
@@ -548,44 +575,46 @@ h1 {
 
 .virtual-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 14px;
-  width: min(1440px, calc(100% - 28px));
-  margin: 0 auto 20px;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 10px;
+  width: min(1440px, calc(100% - 20px));
+  height: calc(100vh - 64px);
+  margin: 0 auto;
 }
 
 .virtual-board,
 .instrument-panel {
-  padding: 15px;
+  padding: 10px;
 }
 
 .panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .panel-head span {
   color: var(--cyan);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
 }
 
 .panel-head strong {
-  font-size: clamp(22px, 3vw, 34px);
+  font-size: clamp(18px, 2.3vw, 26px);
 }
 
 .panel-head.compact strong {
   color: var(--cyan);
-  font-size: 22px;
+  font-size: 17px;
 }
 
 .board-scene {
   position: relative;
-  min-height: 560px;
+  min-height: 0;
+  height: calc(100% - 46px);
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   background: var(--panel-3);
@@ -595,8 +624,8 @@ h1 {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 230px;
-  height: 330px;
+  width: 190px;
+  height: 280px;
   transform: translate(-50%, -50%);
   border: 2px solid var(--cyan);
   border-radius: 8px;
@@ -613,7 +642,7 @@ h1 {
 }
 
 .usb {
-  left: 78px;
+  left: 62px;
   top: -18px;
   width: 74px;
   height: 34px;
@@ -623,10 +652,10 @@ h1 {
 .chip {
   display: grid;
   place-items: center;
-  left: 52px;
-  top: 112px;
-  width: 126px;
-  height: 92px;
+  left: 42px;
+  top: 96px;
+  width: 106px;
+  height: 76px;
   color: var(--cyan);
   font-weight: 900;
   background: #061325;
@@ -635,7 +664,7 @@ h1 {
 .pin-row {
   top: 42px;
   width: 18px;
-  height: 245px;
+  height: 205px;
   background: repeating-linear-gradient(180deg, var(--cyan) 0 8px, transparent 8px 18px);
 }
 
@@ -658,7 +687,7 @@ h1 {
 .sensor-card {
   position: absolute;
   width: min(240px, 38%);
-  padding: 16px;
+  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -685,18 +714,18 @@ h1 {
   display: block;
   margin: 8px 0 4px;
   color: var(--cyan);
-  font-size: clamp(34px, 6vw, 62px);
+  font-size: clamp(24px, 4vw, 42px);
 }
 
 .virtual-controls {
   display: grid;
   align-content: start;
-  gap: 14px;
+  gap: 10px;
 }
 
 .slider-row {
   display: grid;
-  gap: 10px;
+  gap: 7px;
 }
 
 .slider-row span {
@@ -711,9 +740,11 @@ input[type="range"] {
 
 .payload-preview {
   overflow: auto;
-  min-height: 180px;
-  margin: 14px 0 0;
-  padding: 12px;
+  min-height: 118px;
+  max-height: 170px;
+  margin: 8px 0 0;
+  padding: 9px;
+  font-size: 12px;
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   color: #d5fbff;
@@ -726,12 +757,29 @@ input[type="range"] {
   }
 }
 
+@media (min-width: 1181px) {
+  .module-grid {
+    height: 100%;
+    grid-template-columns: 0.82fr 1.18fr 0.9fr;
+  }
+}
+
 @media (max-width: 1040px) {
+  body[data-page="simulator"],
+  body[data-page="virtual"] {
+    overflow: auto;
+  }
+
   .trainer-header,
   .topbar,
   .overview-panel,
   .virtual-layout {
     grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .kit-shell {
+    height: auto;
   }
 
   .header-readout,
