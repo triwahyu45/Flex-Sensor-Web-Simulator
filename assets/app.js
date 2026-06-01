@@ -271,7 +271,7 @@ function initSimulator() {
       setHeaderStatus('Disconnected - ESP32 unavailable', 'red');
       setConnectionStatus(`Error: ${selectedMdns}`, 'red');
     } finally {
-      if (espPolling) pollTimer = window.setTimeout(pollEsp32, 120);
+      if (espPolling) pollTimer = window.setTimeout(pollEsp32, 40);
     }
   }
 
@@ -490,7 +490,7 @@ const char* mdnsName = "flex-kelompok1";
 const int FLEX_A_PIN = 34;
 const int FLEX_B_PIN = 35;
 const int SAMPLE_COUNT = 10;
-const unsigned long SENSOR_INTERVAL_MS = 20;
+const unsigned long SENSOR_INTERVAL_MS = 10;
 const unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
 
 WebServer server(80);
@@ -499,6 +499,43 @@ int flexB = 0;
 unsigned long lastSensorRead = 0;
 unsigned long lastWifiRetry = 0;
 bool serverStarted = false;
+
+const char MONITOR_PAGE[] PROGMEM = R"rawliteral(
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ESP32 Flex Monitor</title>
+    <style>
+      body{margin:0;padding:24px;font-family:Arial,sans-serif;color:#f4f7fb;background:#08090a}
+      main{max-width:520px;margin:auto}h1{font-size:22px}section{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      article{padding:18px;border:1px solid #2a2d31;border-radius:8px;background:#15171a}
+      span{display:block;color:#8e959d;font-size:12px}strong{display:block;margin-top:8px;color:#79e39f;font-size:36px}
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>ESP32 Flex Monitor</h1>
+      <section>
+        <article><span>Flex A</span><strong id="a">-</strong></article>
+        <article><span>Flex B</span><strong id="b">-</strong></article>
+      </section>
+    </main>
+    <script>
+      async function update(){
+        try{
+          const response=await fetch('/data',{cache:'no-store'});
+          const data=await response.json();
+          document.getElementById('a').textContent=data.flexA;
+          document.getElementById('b').textContent=data.flexB;
+        }catch(error){}
+      }
+      update();
+      setInterval(update,50);
+    </script>
+  </body>
+</html>
+)rawliteral";
 
 void sendCors() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -522,9 +559,13 @@ void handleData() {
 
 void startWebServer() {
   if (MDNS.begin(mdnsName)) {
-    Serial.println("mDNS: http://" + String(mdnsName) + ".local/data");
+    Serial.println("Monitor: http://" + String(mdnsName) + ".local");
+    Serial.println("JSON API: http://" + String(mdnsName) + ".local/data");
   }
 
+  server.on("/", HTTP_GET, []() {
+    server.send_P(200, "text/html", MONITOR_PAGE);
+  });
   server.on("/data", HTTP_OPTIONS, []() {
     sendCors();
     server.send(204);
@@ -561,7 +602,7 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     if (!serverStarted) {
       Serial.println("WiFi tersambung");
-      Serial.println("IP ESP32: http://" + WiFi.localIP().toString() + "/data");
+      Serial.println("Monitor IP: http://" + WiFi.localIP().toString());
       startWebServer();
     }
     server.handleClient();
