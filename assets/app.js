@@ -494,6 +494,11 @@ const unsigned long SENSOR_INTERVAL_MS = 10;
 const unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
 
 WebServer server(80);
+int readingsA[SAMPLE_COUNT];
+int readingsB[SAMPLE_COUNT];
+int readIndex = 0;
+long totalA = 0;
+long totalB = 0;
 int flexA = 0;
 int flexB = 0;
 unsigned long lastSensorRead = 0;
@@ -543,12 +548,36 @@ void sendCors() {
   server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-int readFlexAverage(int pin) {
-  long total = 0;
+void initializeFlexReadings() {
+  int initialA = analogRead(FLEX_A_PIN);
+  int initialB = analogRead(FLEX_B_PIN);
   for (int i = 0; i < SAMPLE_COUNT; i++) {
-    total += analogRead(pin);
+    readingsA[i] = initialA;
+    readingsB[i] = initialB;
+    totalA += initialA;
+    totalB += initialB;
   }
-  return total / SAMPLE_COUNT;
+  flexA = initialA;
+  flexB = initialB;
+}
+
+void updateFlexReadings() {
+  totalA -= readingsA[readIndex];
+  totalB -= readingsB[readIndex];
+
+  readingsA[readIndex] = analogRead(FLEX_A_PIN);
+  readingsB[readIndex] = analogRead(FLEX_B_PIN);
+
+  totalA += readingsA[readIndex];
+  totalB += readingsB[readIndex];
+
+  readIndex++;
+  if (readIndex >= SAMPLE_COUNT) {
+    readIndex = 0;
+  }
+
+  flexA = totalA / SAMPLE_COUNT;
+  flexB = totalB / SAMPLE_COUNT;
 }
 
 void handleData() {
@@ -581,8 +610,7 @@ void setup() {
   analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
   analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
 
-  flexA = readFlexAverage(FLEX_A_PIN);
-  flexB = readFlexAverage(FLEX_B_PIN);
+  initializeFlexReadings();
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(false);
@@ -595,8 +623,7 @@ void loop() {
 
   if (now - lastSensorRead >= SENSOR_INTERVAL_MS) {
     lastSensorRead = now;
-    flexA = readFlexAverage(FLEX_A_PIN);
-    flexB = readFlexAverage(FLEX_B_PIN);
+    updateFlexReadings();
   }
 
   if (WiFi.status() == WL_CONNECTED) {
