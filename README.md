@@ -13,7 +13,7 @@ Repository: https://github.com/triwahyu45/Flex-Sensor-Web-Simulator
 ## Mode Trainer
 
 - **Servo**: Flex A mengontrol sudut servo 0-180 derajat jika bagan Servo ON.
-- **Arm Gripper**: Flex A menggeser arm, Flex B membuka/menutup gripper jika bagan Gripper ON.
+- **Arm Gripper**: Flex A memutar arm SCARA, Flex B membuka/menutup gripper jika bagan Gripper ON.
 - **Grafik + Audio**: grafik realtime flex sensor berjalan dan threshold Flex A + Flex B memicu suara jika bagan Grafik + Audio ON.
 
 Setiap modul punya kalibrasi sendiri. Min/max input tetap tersedia sebagai fallback. Untuk sensor yang tidak linear, tambahkan titik kalibrasi ADC dan output aktuator. Tekuk sensor ke posisi yang diinginkan, tekan **Capture**, lalu isi nilai output: derajat Servo, posisi Arm `0-100%`, atau bukaan Grip `0-100%`. Setelah minimal dua ADC unik tersimpan, dashboard memakai interpolasi linear per segmen secara otomatis.
@@ -52,8 +52,14 @@ Buka dua tab tersebut bersamaan saat belum ada hardware. Geser slider di **Virtu
 }
 ```
 
-- `flexA` -> servo 0-180 derajat dan posisi arm kiri-kanan.
+- `flexA` -> servo 0-180 derajat dan rotasi arm SCARA kiri-kanan.
 - `flexB` -> bukaan gripper dan threshold audio.
+
+## Visual SCARA 3D
+
+Modul Gripper memakai model SCARA 3D ringan berformat GLB. Drag pada visual untuk melihat sisi lain dan gunakan scroll untuk zoom terbatas. Flex A memutar base arm pada rentang visual aman `-75..75 derajat`, sedangkan Flex B menggerakkan jaw gripper. Dua servo lain dari assembly tetap terlihat sebagai bagian trainer tetapi tidak dianimasikan.
+
+File Three.js disimpan lokal di repository agar halaman tidak bergantung CDN. Raw Inventor seperti `.iam`, `.ipt`, dan `.stp` tetap lokal dan tidak diunggah ke GitHub; repository hanya menyimpan `assets/models/scara-web.glb` hasil optimasi browser.
 
 ## Koneksi ESP32 mDNS
 

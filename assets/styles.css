@@ -500,6 +500,34 @@ h1 {
   background: var(--panel-3);
 }
 
+.scara-canvas-host,
+.scara-fallback {
+  position: absolute;
+  inset: 0;
+}
+
+.scara-canvas-host canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.scara-loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  transform: translate(-50%, -50%);
+}
+
+.scara-fallback[hidden] {
+  display: none;
+}
+
 .travel-rail {
   position: absolute;
   left: 10%;

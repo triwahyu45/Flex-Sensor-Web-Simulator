@@ -11,3 +11,8 @@ vite-err.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+mini-scara-robot-servo-rcxaz-9g-or-mg90s-1.snapshot.5/
+*.iam
+*.ipt
+*.stp
+*.step

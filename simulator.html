@@ -105,27 +105,32 @@
             <span></span>
           </label>
         </div>
-        <div class="gripper-stage" aria-label="Visual gripper menghadap bawah">
-          <div class="travel-rail"></div>
-          <div class="travel-label left">KIRI</div>
-          <div class="travel-label right">KANAN</div>
-          <svg class="gripper-svg" viewBox="0 0 760 470" role="img" aria-label="Arm gripper controlled by flex sensors">
-            <g id="armGroup">
-              <line class="drop-cable" x1="380" y1="35" x2="380" y2="118" />
-              <rect class="servo-box" x="322" y="112" width="116" height="72" rx="12" />
-              <circle class="servo-hub" cx="380" cy="148" r="19" />
-              <rect class="arm-neck" x="362" y="180" width="36" height="94" rx="14" />
-              <rect class="palm" x="300" y="266" width="160" height="42" rx="12" />
-              <g id="leftJaw">
-                <path class="jaw" d="M322 300 L262 338 L246 420 L288 420 L304 362 L354 330 Z" />
-                <circle class="joint-dot" cx="324" cy="306" r="8" />
+        <div class="gripper-stage scara-stage" aria-label="Visual SCARA 3D controlled by flex sensors">
+          <div id="scaraCanvasHost" class="scara-canvas-host">
+            <span id="scaraLoading" class="scara-loading">Memuat SCARA 3D...</span>
+          </div>
+          <div id="scaraFallback" class="scara-fallback" hidden>
+            <div class="travel-rail"></div>
+            <div class="travel-label left">KIRI</div>
+            <div class="travel-label right">KANAN</div>
+            <svg class="gripper-svg" viewBox="0 0 760 470" role="img" aria-label="Fallback arm gripper">
+              <g id="armGroup">
+                <line class="drop-cable" x1="380" y1="35" x2="380" y2="118" />
+                <rect class="servo-box" x="322" y="112" width="116" height="72" rx="12" />
+                <circle class="servo-hub" cx="380" cy="148" r="19" />
+                <rect class="arm-neck" x="362" y="180" width="36" height="94" rx="14" />
+                <rect class="palm" x="300" y="266" width="160" height="42" rx="12" />
+                <g id="leftJaw">
+                  <path class="jaw" d="M322 300 L262 338 L246 420 L288 420 L304 362 L354 330 Z" />
+                  <circle class="joint-dot" cx="324" cy="306" r="8" />
+                </g>
+                <g id="rightJaw">
+                  <path class="jaw" d="M438 300 L498 338 L514 420 L472 420 L456 362 L406 330 Z" />
+                  <circle class="joint-dot" cx="436" cy="306" r="8" />
+                </g>
               </g>
-              <g id="rightJaw">
-                <path class="jaw" d="M438 300 L498 338 L514 420 L472 420 L456 362 L406 330 Z" />
-                <circle class="joint-dot" cx="436" cy="306" r="8" />
-              </g>
-            </g>
-          </svg>
+            </svg>
+          </div>
         </div>
         <div class="metric-pair">
           <div>
@@ -242,6 +247,7 @@
     </section>
   </main>
 
+  <script type="module" src="assets/scara-viewer.js"></script>
   <script src="assets/app.js"></script>
 </body>
 

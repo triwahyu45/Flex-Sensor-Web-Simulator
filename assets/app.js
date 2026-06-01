@@ -723,6 +723,7 @@ function initSimulator() {
       refs.arm.style.transform = `translate3d(${panPx}px, 0, 0)`;
       refs.leftJaw.style.transform = `rotate(${-jawAngle}deg)`;
       refs.rightJaw.style.transform = `rotate(${jawAngle}deg)`;
+      window.scaraViewer?.setPose(current.pan, current.grip);
       refs.pan.textContent = `${Math.round(current.pan)}%`;
       refs.grip.textContent = `${Math.round(current.grip)}%`;
     }
