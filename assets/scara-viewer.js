@@ -14,9 +14,11 @@ function showFallback(message = 'SCARA 3D tidak tersedia') {
 }
 
 function findByNamePart(root, part) {
+  const normalizedPart = part.toLowerCase().replace(/[^a-z0-9]/g, '');
   let match = null;
   root.traverse((object) => {
-    if (!match && object.name.toLowerCase().includes(part)) match = object;
+    const normalizedName = object.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!match && normalizedName.includes(normalizedPart)) match = object;
   });
   return match;
 }
@@ -66,6 +68,21 @@ async function initialize() {
   const model = gltf.scene;
   scene.add(model);
 
+  const rack = findByNamePart(model, 'cremagliera:1');
+  const pinion = findByNamePart(model, 'pignone_17mm:1');
+  const carriage = findByNamePart(model, 'assieme_pinza:1');
+  const jaw = findByNamePart(model, 'dito_pinza_mg90s:1');
+  const rackStart = rack?.position.clone();
+  const pinionRotationStart = pinion?.rotation.clone();
+  const carriageStart = carriage?.position.clone();
+  const jawStart = jaw?.position.clone();
+  const rackSize = rack ? new THREE.Box3().setFromObject(rack).getSize(new THREE.Vector3()) : new THREE.Vector3();
+  const pinionSize = pinion ? new THREE.Box3().setFromObject(pinion).getSize(new THREE.Vector3()) : new THREE.Vector3();
+  const jawSize = jaw ? new THREE.Box3().setFromObject(jaw).getSize(new THREE.Vector3()) : new THREE.Vector3();
+  const rackTravel = rackSize.x * 0.2;
+  const pinionPitchRadius = Math.max(pinionSize.x, pinionSize.z) * 0.5;
+  const jawTravel = jawSize.x * 0.18;
+
   const initialBox = new THREE.Box3().setFromObject(model);
   const initialSize = initialBox.getSize(new THREE.Vector3());
   const initialCenter = initialBox.getCenter(new THREE.Vector3());
@@ -89,18 +106,12 @@ async function initialize() {
 
   const sphere = modelBox.getBoundingSphere(new THREE.Sphere());
   const cameraDistance = sphere.radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.18;
-  const cameraDirection = new THREE.Vector3(1.22, 0.82, 1.35).normalize();
+  const cameraDirection = new THREE.Vector3(0, 0, 1);
   camera.position.copy(modelCenter).add(cameraDirection.multiplyScalar(cameraDistance));
   controls.target.copy(modelCenter);
   controls.minDistance = cameraDistance * 0.56;
   controls.maxDistance = cameraDistance * 1.75;
   controls.update();
-
-  const jaw = findByNamePart(model, 'dito_pinza');
-  const jawFrame = findByNamePart(model, 'blocco_pinza');
-  const jawStart = jaw?.position.clone();
-  const jawFrameStart = jawFrame?.position.clone();
-  const jawTravel = longestSide * 0.026;
 
   window.scaraViewer = {
     setPose(pan, grip) {
@@ -109,6 +120,14 @@ async function initialize() {
     },
     getPose() {
       return { ...requestedPose };
+    },
+    getMechanics() {
+      return {
+        rackX: rack?.position.x,
+        pinionY: pinion?.rotation.y,
+        carriageX: carriage?.position.x,
+        jawX: jaw?.position.x,
+      };
     },
   };
 
@@ -125,10 +144,15 @@ async function initialize() {
 
   function animate() {
     if (host.hidden) return;
+    const rackPosition = requestedPose.pan / 100;
     const opening = requestedPose.grip / 100;
-    model.rotation.y = THREE.MathUtils.degToRad(requestedPose.pan * 0.75);
+    const rackOffset = rackTravel * rackPosition;
+    if (rack && rackStart) rack.position.x = rackStart.x + rackOffset;
+    if (pinion && pinionRotationStart && pinionPitchRadius) {
+      pinion.rotation.y = pinionRotationStart.y - rackOffset / pinionPitchRadius;
+    }
+    if (carriage && carriageStart) carriage.position.copy(carriageStart);
     if (jaw && jawStart) jaw.position.x = jawStart.x + jawTravel * opening;
-    if (jawFrame && jawFrameStart) jawFrame.position.x = jawFrameStart.x - jawTravel * opening * 0.55;
     controls.update();
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
