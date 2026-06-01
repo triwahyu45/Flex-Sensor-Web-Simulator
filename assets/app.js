@@ -276,7 +276,7 @@ function initSimulator() {
         setConnectionStatus(`Reconnecting: ${selectedMdns}`, 'yellow');
       }
     } finally {
-      if (espPolling) pollTimer = window.setTimeout(pollEsp32, pollFailures ? 120 : 40);
+      if (espPolling) pollTimer = window.setTimeout(pollEsp32, pollFailures ? 80 : 20);
     }
   }
 
@@ -451,14 +451,14 @@ function initSimulator() {
     refs.servoFlex.textContent = current[settings.servo.source] ?? current.flexA;
 
     if (modules.servo) {
-      current.servo += (target.servo - current.servo) * 0.8;
+      current.servo = target.servo;
       refs.needle.style.transform = `rotate(${-90 + current.servo}deg)`;
       refs.servo.textContent = Math.round(current.servo);
     }
 
     if (modules.gripper) {
-      current.pan += (target.pan - current.pan) * 0.8;
-      current.grip += (target.grip - current.grip) * 0.8;
+      current.pan = target.pan;
+      current.grip = target.grip;
       const panPx = current.pan * 2.05;
       const jawAngle = mapCalibrated(current.grip, 0, 100, 0, 25);
       refs.arm.style.transform = `translate3d(${panPx}px, 0, 0)`;
@@ -496,9 +496,9 @@ const char* mdnsName = "flex-kelompok1";
 
 const int FLEX_A_PIN = 34;
 const int FLEX_B_PIN = 35;
-const int SAMPLE_COUNT = 10;
-const unsigned long SENSOR_INTERVAL_MS = 10;
-const unsigned long SERIAL_INTERVAL_MS = 100;
+const int SAMPLE_COUNT = 5;
+const unsigned long SENSOR_INTERVAL_MS = 5;
+const unsigned long SERIAL_INTERVAL_MS = 50;
 const unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
 
 WebServer server(80);
@@ -547,7 +547,7 @@ const char MONITOR_PAGE[] PROGMEM = R"rawliteral(
       }
       async function refresh(){
         await update();
-        setTimeout(refresh,50);
+        setTimeout(refresh,25);
       }
       refresh();
     </script>
