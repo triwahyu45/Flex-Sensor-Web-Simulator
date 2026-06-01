@@ -52,6 +52,7 @@ function mapCalibrated(value, inMin, inMax, outMin, outMax) {
 function normalizeMdns(value) {
   const raw = String(value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   if (!raw) return '';
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(raw)) return raw;
   return raw.endsWith('.local') ? raw : `${raw}.local`;
 }
 
@@ -248,7 +249,9 @@ function initSimulator() {
     setHeaderStatus(source, 'green');
   }
 
-  createChannel((payload) => acceptPayload(payload, 'Virtual data'));
+  createChannel((payload) => {
+    if (!espPolling) acceptPayload(payload, 'Virtual data');
+  });
 
   function setConnectionStatus(text, state = 'red') {
     refs.mdnsStatus.innerHTML = `<i id="mdnsLed" class="led led-${state}"></i> ${text}`;
@@ -265,6 +268,7 @@ function initSimulator() {
       acceptPayload({ flexA: data.flexA, flexB: data.flexB, mdns: selectedMdns }, `ESP32 ${selectedMdns}`);
       setConnectionStatus(`Connected: ${selectedMdns}`, 'green');
     } catch {
+      setHeaderStatus('Disconnected - ESP32 unavailable', 'red');
       setConnectionStatus(`Error: ${selectedMdns}`, 'red');
     } finally {
       if (espPolling) pollTimer = window.setTimeout(pollEsp32, 120);
@@ -487,7 +491,7 @@ const int FLEX_A_PIN = 34;
 const int FLEX_B_PIN = 35;
 const int SAMPLE_COUNT = 10;
 const unsigned long SENSOR_INTERVAL_MS = 20;
-const unsigned long WIFI_RETRY_INTERVAL_MS = 1000;
+const unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
 
 WebServer server(80);
 int flexA = 0;
@@ -538,6 +542,10 @@ void setup() {
 
   flexA = readFlexAverage(FLEX_A_PIN);
   flexB = readFlexAverage(FLEX_B_PIN);
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(false);
+  Serial.println("Menghubungkan ke WiFi: " + String(ssid));
   WiFi.begin(ssid, password);
 }
 
@@ -552,12 +560,14 @@ void loop() {
 
   if (WiFi.status() == WL_CONNECTED) {
     if (!serverStarted) {
+      Serial.println("WiFi tersambung");
+      Serial.println("IP ESP32: http://" + WiFi.localIP().toString() + "/data");
       startWebServer();
     }
     server.handleClient();
   } else if (now - lastWifiRetry >= WIFI_RETRY_INTERVAL_MS) {
     lastWifiRetry = now;
-    Serial.println("Menghubungkan WiFi...");
+    Serial.println("WiFi belum tersambung, status: " + String(WiFi.status()));
     WiFi.reconnect();
   }
 }`;

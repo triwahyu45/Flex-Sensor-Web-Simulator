@@ -67,6 +67,8 @@ Di halaman trainer, isi box **ESP32 mDNS** dengan nama device tanpa `http://`, m
 http://flex-kelompok1.local/data
 ```
 
+Jika `.local` belum terdeteksi di laptop, masukkan alamat IP yang tampil di Serial Monitor, misalnya `192.168.137.42`. Saat tombol **Connect** ditekan, dashboard memprioritaskan ESP32 asli dan mengabaikan stream Virtual ESP32.
+
 Endpoint ESP32 perlu mengembalikan JSON:
 
 ```json
