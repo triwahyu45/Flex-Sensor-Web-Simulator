@@ -578,6 +578,11 @@ void updateFlexReadings() {
 
   flexA = totalA / SAMPLE_COUNT;
   flexB = totalB / SAMPLE_COUNT;
+
+  Serial.print("Flex A: ");
+  Serial.print(flexA);
+  Serial.print(" | Flex B: ");
+  Serial.println(flexB);
 }
 
 void handleData() {
