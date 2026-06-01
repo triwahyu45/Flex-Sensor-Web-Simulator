@@ -745,7 +745,7 @@ const char* mdnsName = "flex-kelompok1";
 
 const int FLEX_A_PIN = 34;
 const int FLEX_B_PIN = 35;
-const int SAMPLE_COUNT = 5;
+const int SAMPLE_COUNT = 20;
 const unsigned long SENSOR_INTERVAL_MS = 5;
 const unsigned long SERIAL_INTERVAL_MS = 50;
 const unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
