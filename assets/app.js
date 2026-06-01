@@ -485,8 +485,12 @@ const char* mdnsName = "flex-kelompok1";
 
 const int FLEX_A_PIN = 34;
 const int FLEX_B_PIN = 35;
+const int SAMPLE_COUNT = 10;
+const float EMA_ALPHA = 0.25;
 
 WebServer server(80);
+float filteredFlexA = -1;
+float filteredFlexB = -1;
 
 void sendCors() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -494,9 +498,25 @@ void sendCors() {
   server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
+int readFlexFiltered(int pin, float &previousValue) {
+  long total = 0;
+  for (int i = 0; i < SAMPLE_COUNT; i++) {
+    total += analogRead(pin);
+    delayMicroseconds(200);
+  }
+
+  float average = total / (float) SAMPLE_COUNT;
+  if (previousValue < 0) {
+    previousValue = average;
+  } else {
+    previousValue = (EMA_ALPHA * average) + ((1.0 - EMA_ALPHA) * previousValue);
+  }
+  return round(previousValue);
+}
+
 void handleData() {
-  int flexA = analogRead(FLEX_A_PIN);
-  int flexB = analogRead(FLEX_B_PIN);
+  int flexA = readFlexFiltered(FLEX_A_PIN, filteredFlexA);
+  int flexB = readFlexFiltered(FLEX_B_PIN, filteredFlexB);
   String json = "{\\\"flexA\\\":" + String(flexA) + ",\\\"flexB\\\":" + String(flexB) + "}";
   sendCors();
   server.send(200, "application/json", json);
@@ -504,6 +524,10 @@ void handleData() {
 
 void setup() {
   Serial.begin(115200);
+  analogReadResolution(12);
+  analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
+  analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
+
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(300);

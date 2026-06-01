@@ -84,7 +84,9 @@ Access-Control-Allow-Origin: *
 
 `virtual-esp32.html` tetap ada sebagai hidden/dev sender saat hardware belum tersedia. Isi mDNS yang sama di trainer dan Virtual ESP32 agar data virtual hanya diterima oleh trainer yang cocok. Jika mDNS berbeda, Simulator menampilkan status merah `Disconnected - mDNS mismatch`.
 
-Halaman Virtual ESP32 juga menyediakan contoh sketch Arduino ESP32 yang bisa dicopy. Sketch contoh memakai `WiFi`, `WebServer`, `ESPmDNS`, endpoint `/data`, pin Flex A GPIO 34, dan Flex B GPIO 35.
+Halaman Virtual ESP32 juga menyediakan contoh sketch Arduino ESP32 yang bisa dicopy. Sketch contoh memakai `WiFi`, `WebServer`, `ESPmDNS`, endpoint `/data`, pin Flex A GPIO 34, dan Flex B GPIO 35. Pembacaan setiap flex sensor dirata-rata dari 10 sampel lalu dilembutkan dengan EMA ringan agar stabil tetapi tetap responsif.
+
+Untuk mengurangi noise ADC dari hardware, pasang kapasitor keramik 100 nF dari masing-masing pin ADC ke GND. GPIO 34 dan 35 tetap dipakai karena keduanya berasal dari ADC1 dan aman digunakan saat Wi-Fi ESP32 aktif.
 - `phrase` -> output suara gabungan dari rule Flex A dan Flex B.
 
 ## Deploy GitHub Pages
