@@ -71,6 +71,8 @@ Jika `.local` belum terdeteksi di laptop, masukkan alamat IP yang tampil di Seri
 
 Buka `http://flex-kelompok1.local` untuk melihat monitor Flex A dan Flex B yang memperbarui nilai otomatis. Endpoint `http://flex-kelompok1.local/data` tetap berupa snapshot JSON untuk dashboard.
 
+Jika koneksi hotspot sempat terputus, sketch akan mencoba tersambung ulang dan mendaftarkan ulang mDNS secara otomatis. Dashboard juga tetap melakukan retry tanpa perlu menekan tombol **Connect** lagi.
+
 Endpoint ESP32 perlu mengembalikan JSON:
 
 ```json

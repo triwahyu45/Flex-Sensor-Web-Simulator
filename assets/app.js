@@ -193,6 +193,7 @@ function initSimulator() {
   let selectedMdns = normalizeMdns(localStorage.getItem(DEVICE_KEY));
   let espPolling = false;
   let pollTimer = null;
+  let pollFailures = 0;
   const graph = Array.from({ length: 160 }, () => ({ flexA: current.flexA, flexB: current.flexB }));
   const ctx = refs.chart.getContext('2d');
 
@@ -265,13 +266,17 @@ function initSimulator() {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       if (typeof data.flexA !== 'number' || typeof data.flexB !== 'number') throw new Error('Invalid payload');
+      pollFailures = 0;
       acceptPayload({ flexA: data.flexA, flexB: data.flexB, mdns: selectedMdns }, `ESP32 ${selectedMdns}`);
       setConnectionStatus(`Connected: ${selectedMdns}`, 'green');
     } catch {
-      setHeaderStatus('Disconnected - ESP32 unavailable', 'red');
-      setConnectionStatus(`Error: ${selectedMdns}`, 'red');
+      pollFailures++;
+      if (pollFailures >= 5) {
+        setHeaderStatus('Reconnecting - ESP32 unavailable', 'yellow');
+        setConnectionStatus(`Reconnecting: ${selectedMdns}`, 'yellow');
+      }
     } finally {
-      if (espPolling) pollTimer = window.setTimeout(pollEsp32, 40);
+      if (espPolling) pollTimer = window.setTimeout(pollEsp32, pollFailures ? 120 : 40);
     }
   }
 
@@ -286,6 +291,7 @@ function initSimulator() {
       return;
     }
     espPolling = true;
+    pollFailures = 0;
     window.clearTimeout(pollTimer);
     setConnectionStatus(`Connecting: ${selectedMdns}`, 'yellow');
     pollEsp32();
@@ -293,6 +299,7 @@ function initSimulator() {
 
   refs.disconnectEsp.addEventListener('click', () => {
     espPolling = false;
+    pollFailures = 0;
     window.clearTimeout(pollTimer);
     setConnectionStatus('Disconnected', 'red');
   });
@@ -491,6 +498,7 @@ const int FLEX_A_PIN = 34;
 const int FLEX_B_PIN = 35;
 const int SAMPLE_COUNT = 10;
 const unsigned long SENSOR_INTERVAL_MS = 10;
+const unsigned long SERIAL_INTERVAL_MS = 100;
 const unsigned long WIFI_RETRY_INTERVAL_MS = 5000;
 
 WebServer server(80);
@@ -502,8 +510,10 @@ long totalB = 0;
 int flexA = 0;
 int flexB = 0;
 unsigned long lastSensorRead = 0;
+unsigned long lastSerialPrint = 0;
 unsigned long lastWifiRetry = 0;
 bool serverStarted = false;
+bool mdnsStarted = false;
 
 const char MONITOR_PAGE[] PROGMEM = R"rawliteral(
 <!doctype html>
@@ -535,8 +545,11 @@ const char MONITOR_PAGE[] PROGMEM = R"rawliteral(
           document.getElementById('b').textContent=data.flexB;
         }catch(error){}
       }
-      update();
-      setInterval(update,50);
+      async function refresh(){
+        await update();
+        setTimeout(refresh,50);
+      }
+      refresh();
     </script>
   </body>
 </html>
@@ -579,10 +592,6 @@ void updateFlexReadings() {
   flexA = totalA / SAMPLE_COUNT;
   flexB = totalB / SAMPLE_COUNT;
 
-  Serial.print("Flex A: ");
-  Serial.print(flexA);
-  Serial.print(" | Flex B: ");
-  Serial.println(flexB);
 }
 
 void handleData() {
@@ -591,12 +600,16 @@ void handleData() {
   server.send(200, "application/json", json);
 }
 
-void startWebServer() {
+void startMdns() {
   if (MDNS.begin(mdnsName)) {
+    mdnsStarted = true;
     Serial.println("Monitor: http://" + String(mdnsName) + ".local");
     Serial.println("JSON API: http://" + String(mdnsName) + ".local/data");
   }
+}
 
+void startWebServer() {
+  startMdns();
   server.on("/", HTTP_GET, []() {
     server.send_P(200, "text/html", MONITOR_PAGE);
   });
@@ -631,17 +644,35 @@ void loop() {
     updateFlexReadings();
   }
 
+  if (now - lastSerialPrint >= SERIAL_INTERVAL_MS) {
+    lastSerialPrint = now;
+    Serial.print("Flex A: ");
+    Serial.print(flexA);
+    Serial.print(" | Flex B: ");
+    Serial.println(flexB);
+  }
+
   if (WiFi.status() == WL_CONNECTED) {
     if (!serverStarted) {
       Serial.println("WiFi tersambung");
       Serial.println("Monitor IP: http://" + WiFi.localIP().toString());
       startWebServer();
+    } else if (!mdnsStarted) {
+      Serial.println("WiFi tersambung kembali");
+      Serial.println("Monitor IP: http://" + WiFi.localIP().toString());
+      startMdns();
     }
     server.handleClient();
-  } else if (now - lastWifiRetry >= WIFI_RETRY_INTERVAL_MS) {
-    lastWifiRetry = now;
-    Serial.println("WiFi belum tersambung, status: " + String(WiFi.status()));
-    WiFi.reconnect();
+  } else {
+    if (mdnsStarted) {
+      MDNS.end();
+      mdnsStarted = false;
+    }
+    if (now - lastWifiRetry >= WIFI_RETRY_INTERVAL_MS) {
+      lastWifiRetry = now;
+      Serial.println("WiFi belum tersambung, status: " + String(WiFi.status()));
+      WiFi.reconnect();
+    }
   }
 }`;
 
