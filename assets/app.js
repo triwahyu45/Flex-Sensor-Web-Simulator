@@ -172,6 +172,7 @@ function initSimulator() {
     graphAudioToggle: $('graphAudioToggle'),
     mdnsInput: $('mdnsInput'),
     connectEsp: $('connectEsp'),
+    connectSerial: $('connectSerial'),
     disconnectEsp: $('disconnectEsp'),
     mdnsStatus: $('mdnsStatus'),
     mdnsLed: $('mdnsLed'),
@@ -194,6 +195,9 @@ function initSimulator() {
   let espPolling = false;
   let pollTimer = null;
   let pollFailures = 0;
+  let serialPort = null;
+  let serialReader = null;
+  let serialActive = false;
   const graph = Array.from({ length: 160 }, () => ({ flexA: current.flexA, flexB: current.flexB }));
   const ctx = refs.chart.getContext('2d');
 
@@ -251,12 +255,63 @@ function initSimulator() {
   }
 
   createChannel((payload) => {
-    if (!espPolling) acceptPayload(payload, 'Virtual data');
+    if (!espPolling && !serialActive) acceptPayload(payload, 'Virtual data');
   });
 
   function setConnectionStatus(text, state = 'red') {
     refs.mdnsStatus.innerHTML = `<i id="mdnsLed" class="led led-${state}"></i> ${text}`;
     refs.mdnsLed = document.getElementById('mdnsLed');
+  }
+
+  async function disconnectSerial() {
+    serialActive = false;
+    if (serialReader) {
+      try {
+        await serialReader.cancel();
+      } catch {}
+    }
+    if (serialPort) {
+      try {
+        while (serialReader) {
+          await new Promise((resolve) => window.setTimeout(resolve, 0));
+        }
+        await serialPort.close();
+      } catch {}
+      serialPort = null;
+    }
+  }
+
+  function acceptSerialLine(line) {
+    const match = line.match(/Flex A:\s*(\d+)\s*\|\s*Flex B:\s*(\d+)/i);
+    if (!match) return;
+    acceptPayload({ flexA: Number(match[1]), flexB: Number(match[2]) }, 'Serial ESP32');
+    setConnectionStatus('Connected: Serial ESP32', 'green');
+  }
+
+  async function readSerialLoop() {
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (serialActive && serialPort?.readable) {
+      serialReader = serialPort.readable.getReader();
+      try {
+        while (serialActive) {
+          const { value, done } = await serialReader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() || '';
+          lines.forEach(acceptSerialLine);
+        }
+      } catch {
+        if (serialActive) {
+          setHeaderStatus('Reconnecting - Serial unavailable', 'yellow');
+          setConnectionStatus('Reconnect Serial ESP32', 'yellow');
+        }
+      } finally {
+        serialReader.releaseLock();
+        serialReader = null;
+      }
+    }
   }
 
   async function pollEsp32() {
@@ -280,7 +335,8 @@ function initSimulator() {
     }
   }
 
-  refs.connectEsp.addEventListener('click', () => {
+  refs.connectEsp.addEventListener('click', async () => {
+    await disconnectSerial();
     selectedMdns = normalizeMdns(refs.mdnsInput.value);
     refs.mdnsInput.value = selectedMdns.replace('.local', '');
     localStorage.setItem(DEVICE_KEY, selectedMdns);
@@ -297,12 +353,48 @@ function initSimulator() {
     pollEsp32();
   });
 
-  refs.disconnectEsp.addEventListener('click', () => {
+  refs.connectSerial.addEventListener('click', async () => {
+    if (!('serial' in navigator)) {
+      setHeaderStatus('Web Serial unsupported', 'red');
+      setConnectionStatus('Gunakan Chrome atau Edge via HTTPS/localhost', 'red');
+      return;
+    }
+    try {
+      espPolling = false;
+      window.clearTimeout(pollTimer);
+      await disconnectSerial();
+      setHeaderStatus('Connecting Serial ESP32', 'yellow');
+      setConnectionStatus('Pilih COM ESP32...', 'yellow');
+      serialPort = await navigator.serial.requestPort();
+      await serialPort.open({ baudRate: 115200 });
+      serialActive = true;
+      setHeaderStatus('Serial ESP32', 'green');
+      setConnectionStatus('Connected: Serial ESP32', 'green');
+      readSerialLoop();
+    } catch {
+      await disconnectSerial();
+      setHeaderStatus('Disconnected - Serial unavailable', 'red');
+      setConnectionStatus('Serial cancelled or unavailable', 'red');
+    }
+  });
+
+  refs.disconnectEsp.addEventListener('click', async () => {
     espPolling = false;
     pollFailures = 0;
     window.clearTimeout(pollTimer);
+    await disconnectSerial();
+    setHeaderStatus('Disconnected', 'red');
     setConnectionStatus('Disconnected', 'red');
   });
+
+  if ('serial' in navigator) {
+    navigator.serial.addEventListener('disconnect', async (event) => {
+      if (event.target !== serialPort) return;
+      await disconnectSerial();
+      setHeaderStatus('Disconnected - Serial removed', 'red');
+      setConnectionStatus('Serial ESP32 disconnected', 'red');
+    });
+  }
 
   function syncModuleState() {
     modules.servo = refs.servoToggle.checked;

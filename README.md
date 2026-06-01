@@ -73,6 +73,18 @@ Buka `http://flex-kelompok1.local` untuk melihat monitor Flex A dan Flex B yang 
 
 Jika koneksi hotspot sempat terputus, sketch akan mencoba tersambung ulang dan mendaftarkan ulang mDNS secara otomatis. Dashboard juga tetap melakukan retry tanpa perlu menekan tombol **Connect** lagi.
 
+## Koneksi Serial USB
+
+Dashboard juga bisa membaca ESP32 langsung dari kabel USB tanpa Wi-Fi. Buka dashboard memakai Chrome atau Edge melalui GitHub Pages HTTPS atau `http://127.0.0.1`, lalu tekan **Connect Serial** dan pilih COM ESP32 dari chooser browser. Tutup Arduino Serial Monitor terlebih dahulu karena satu port serial tidak bisa dipakai dua aplikasi bersamaan.
+
+Mode Serial membaca output sketch pada baudrate `115200`:
+
+```text
+Flex A: 1240 | Flex B: 1382
+```
+
+Saat Serial aktif, polling mDNS dan stream Virtual ESP32 diabaikan. Tombol **Disconnect** menutup koneksi Serial maupun mDNS.
+
 Endpoint ESP32 perlu mengembalikan JSON:
 
 ```json

@@ -1,193 +1,206 @@
 <!doctype html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#050506" />
-    <title>Flex Sensor Trainer Kit</title>
-    <link rel="stylesheet" href="assets/styles.css" />
-  </head>
-  <body data-page="simulator">
-    <header class="trainer-header">
-      <a class="brand" href="index.html">
-        <span class="brand-mark">FS</span>
-        <span>
-          <strong>Flex Sensor Trainer Kit</strong>
-          <small>ESP32 realtime trainer</small>
-        </span>
-      </a>
-      <div class="header-readout">
-        <span class="led-status" id="connectionStatus"><i id="connectionLed"></i> Waiting data</span>
-        <strong id="headerFlexRead">Flex A 2048 - Flex B 0</strong>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#050506" />
+  <title>Flex Sensor Trainer Kit</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+
+<body data-page="simulator">
+  <header class="trainer-header">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">FS</span>
+      <span>
+        <strong>Flex Sensor Trainer Kit</strong>
+        <small>ESP32 realtime trainer</small>
+      </span>
+    </a>
+    <div class="header-readout">
+      <span class="led-status" id="connectionStatus"><i id="connectionLed"></i> Waiting data</span>
+      <strong id="headerFlexRead">Flex A 2048 - Flex B 0</strong>
+    </div>
+  </header>
+
+  <main class="kit-shell">
+    <section class="connection-bar" aria-label="ESP32 connection">
+      <label>
+        <span>ESP32 mDNS</span>
+        <input id="mdnsInput" type="text" placeholder="flex-kelompok1" autocomplete="off" />
+      </label>
+      <button id="connectEsp" class="small-action">Connect</button>
+      <button id="connectSerial" class="small-action">Connect Serial</button>
+      <button id="disconnectEsp" class="small-action muted">Disconnect</button>
+      <strong id="mdnsStatus"><i class="led led-red" id="mdnsLed"></i> Disconnected</strong>
+    </section>
+
+    <section class="module-grid" aria-label="Trainer modules">
+      <article class="trainer-module" data-module-card="servo">
+        <div class="module-head">
+          <div>
+            <span>Flex A ke 0-180 deg</span>
+            <h2>Modul Motor Servo</h2>
+          </div>
+          <label class="switch">
+            <input id="servoToggle" type="checkbox" checked />
+            <span></span>
+          </label>
+        </div>
+        <div class="servo-card">
+          <svg viewBox="0 0 300 180" aria-label="Servo gauge 0 sampai 180 derajat">
+            <path class="gauge-arc" d="M38 150 A112 112 0 0 1 262 150" />
+            <path class="gauge-line" d="M62 150 A88 88 0 0 1 238 150" />
+            <g class="ticks">
+              <text x="38" y="164">0</text>
+              <text x="76" y="72">45</text>
+              <text x="150" y="35">90</text>
+              <text x="224" y="72">135</text>
+              <text x="262" y="164">180</text>
+            </g>
+            <line id="needle" class="needle" x1="150" y1="150" x2="150" y2="60" />
+            <circle class="needle-hub" cx="150" cy="150" r="12" />
+          </svg>
+          <div class="metric-row">
+            <span>Flex A</span>
+            <strong><span id="servoFlexRead">2048</span></strong>
+            <small><span id="servoRead">90</span> deg</small>
+          </div>
+        </div>
+        <div class="settings-grid">
+          <label><span>Input</span><select id="servoSource">
+              <option value="flexA">Flex A</option>
+              <option value="flexB">Flex B</option>
+            </select></label>
+          <label><span>In Min</span><input id="servoInMin" type="number" /></label>
+          <label><span>In Max</span><input id="servoInMax" type="number" /></label>
+          <label><span>Out Min</span><input id="servoOutMin" type="number" /></label>
+          <label><span>Out Max</span><input id="servoOutMax" type="number" /></label>
+        </div>
+      </article>
+
+      <article class="trainer-module" data-module-card="gripper">
+        <div class="module-head">
+          <div>
+            <span>Flex A posisi - Flex B grip</span>
+            <h2>Modul Gripper</h2>
+          </div>
+          <label class="switch">
+            <input id="gripperToggle" type="checkbox" />
+            <span></span>
+          </label>
+        </div>
+        <div class="gripper-stage" aria-label="Visual gripper menghadap bawah">
+          <div class="travel-rail"></div>
+          <div class="travel-label left">KIRI</div>
+          <div class="travel-label right">KANAN</div>
+          <svg class="gripper-svg" viewBox="0 0 760 470" role="img" aria-label="Arm gripper controlled by flex sensors">
+            <g id="armGroup">
+              <line class="drop-cable" x1="380" y1="35" x2="380" y2="118" />
+              <rect class="servo-box" x="322" y="112" width="116" height="72" rx="12" />
+              <circle class="servo-hub" cx="380" cy="148" r="19" />
+              <rect class="arm-neck" x="362" y="180" width="36" height="94" rx="14" />
+              <rect class="palm" x="300" y="266" width="160" height="42" rx="12" />
+              <g id="leftJaw">
+                <path class="jaw" d="M322 300 L262 338 L246 420 L288 420 L304 362 L354 330 Z" />
+                <circle class="joint-dot" cx="324" cy="306" r="8" />
+              </g>
+              <g id="rightJaw">
+                <path class="jaw" d="M438 300 L498 338 L514 420 L472 420 L456 362 L406 330 Z" />
+                <circle class="joint-dot" cx="436" cy="306" r="8" />
+              </g>
+            </g>
+          </svg>
+        </div>
+        <div class="metric-pair">
+          <div>
+            <span>Arm</span>
+            <strong id="panRead">0%</strong>
+            <small>Flex A</small>
+          </div>
+          <div>
+            <span>Grip</span>
+            <strong id="gripRead">0%</strong>
+            <small>Flex B</small>
+          </div>
+        </div>
+        <div class="settings-grid gripper-settings">
+          <label><span>Arm Input</span><select id="armSource">
+              <option value="flexA">Flex A</option>
+              <option value="flexB">Flex B</option>
+            </select></label>
+          <label><span>Arm Min</span><input id="armInMin" type="number" /></label>
+          <label><span>Arm Max</span><input id="armInMax" type="number" /></label>
+          <label><span>Grip Input</span><select id="gripSource">
+              <option value="flexB">Flex B</option>
+              <option value="flexA">Flex A</option>
+            </select></label>
+          <label><span>Grip Min</span><input id="gripInMin" type="number" /></label>
+          <label><span>Grip Max</span><input id="gripInMax" type="number" /></label>
+        </div>
+      </article>
+
+      <article class="trainer-module" data-module-card="graphAudio">
+        <div class="module-head">
+          <div>
+            <span>Threshold Flex A + Flex B</span>
+            <h2>Modul Grafik & Suara</h2>
+          </div>
+          <label class="switch">
+            <input id="graphAudioToggle" type="checkbox" />
+            <span></span>
+          </label>
+        </div>
+        <canvas id="flexChart" class="chart" width="640" height="260" aria-label="Grafik realtime flex sensor"></canvas>
+        <div class="settings-grid audio-settings">
+          <label><span>Graph Min</span><input id="graphMin" type="number" /></label>
+          <label><span>Graph Max</span><input id="graphMax" type="number" /></label>
+        </div>
+        <div class="voice-row">
+          <button id="enableVoice" class="small-action">Enable Voice</button>
+          <button id="speakNow" class="small-action muted">Test Audio</button>
+          <span id="voiceStatus">Audio off</span>
+        </div>
+        <div class="dual-rules">
+          <section class="rule-panel">
+            <div class="rules-head">
+              <span>Flex A - range - teks</span>
+              <button id="addAudioRuleA" class="mini-action">Tambah</button>
+            </div>
+            <div class="threshold-list" id="audioRulesA"></div>
+          </section>
+          <section class="rule-panel">
+            <div class="rules-head">
+              <span>Flex B - range - teks</span>
+              <button id="addAudioRuleB" class="mini-action">Tambah</button>
+            </div>
+            <div class="threshold-list" id="audioRulesB"></div>
+          </section>
+        </div>
+      </article>
+    </section>
+
+    <section class="readout-strip">
+      <div>
+        <span>Flex A</span>
+        <strong id="flexARead">2048</strong>
+        <small>servo + posisi arm</small>
       </div>
-    </header>
+      <div>
+        <span>Flex B</span>
+        <strong id="flexBRead">0</strong>
+        <small>grip + suara</small>
+      </div>
+      <div>
+        <span>Modul ON</span>
+        <strong id="activeModulesRead">1</strong>
+        <small>ON/OFF trainer</small>
+      </div>
+    </section>
+  </main>
 
-    <main class="kit-shell">
-      <section class="connection-bar" aria-label="ESP32 connection">
-        <label>
-          <span>ESP32 mDNS</span>
-          <input id="mdnsInput" type="text" placeholder="flex-kelompok1" autocomplete="off" />
-        </label>
-        <button id="connectEsp" class="small-action">Connect</button>
-        <button id="disconnectEsp" class="small-action muted">Disconnect</button>
-        <strong id="mdnsStatus"><i class="led led-red" id="mdnsLed"></i> Disconnected</strong>
-      </section>
+  <script src="assets/app.js"></script>
+</body>
 
-      <section class="module-grid" aria-label="Trainer modules">
-        <article class="trainer-module" data-module-card="servo">
-          <div class="module-head">
-            <div>
-              <span>Flex A ke 0-180 deg</span>
-              <h2>Modul Motor Servo</h2>
-            </div>
-            <label class="switch">
-              <input id="servoToggle" type="checkbox" checked />
-              <span></span>
-            </label>
-          </div>
-          <div class="servo-card">
-            <svg viewBox="0 0 300 180" aria-label="Servo gauge 0 sampai 180 derajat">
-              <path class="gauge-arc" d="M38 150 A112 112 0 0 1 262 150" />
-              <path class="gauge-line" d="M62 150 A88 88 0 0 1 238 150" />
-              <g class="ticks">
-                <text x="38" y="164">0</text>
-                <text x="76" y="72">45</text>
-                <text x="150" y="35">90</text>
-                <text x="224" y="72">135</text>
-                <text x="262" y="164">180</text>
-              </g>
-              <line id="needle" class="needle" x1="150" y1="150" x2="150" y2="60" />
-              <circle class="needle-hub" cx="150" cy="150" r="12" />
-            </svg>
-            <div class="metric-row">
-              <span>Flex A</span>
-              <strong><span id="servoFlexRead">2048</span></strong>
-              <small><span id="servoRead">90</span> deg</small>
-            </div>
-          </div>
-          <div class="settings-grid">
-            <label><span>Input</span><select id="servoSource"><option value="flexA">Flex A</option><option value="flexB">Flex B</option></select></label>
-            <label><span>In Min</span><input id="servoInMin" type="number" /></label>
-            <label><span>In Max</span><input id="servoInMax" type="number" /></label>
-            <label><span>Out Min</span><input id="servoOutMin" type="number" /></label>
-            <label><span>Out Max</span><input id="servoOutMax" type="number" /></label>
-          </div>
-        </article>
-
-        <article class="trainer-module" data-module-card="gripper">
-          <div class="module-head">
-            <div>
-              <span>Flex A posisi - Flex B grip</span>
-              <h2>Modul Gripper</h2>
-            </div>
-            <label class="switch">
-              <input id="gripperToggle" type="checkbox" />
-              <span></span>
-            </label>
-          </div>
-          <div class="gripper-stage" aria-label="Visual gripper menghadap bawah">
-            <div class="travel-rail"></div>
-            <div class="travel-label left">KIRI</div>
-            <div class="travel-label right">KANAN</div>
-            <svg class="gripper-svg" viewBox="0 0 760 470" role="img" aria-label="Arm gripper controlled by flex sensors">
-              <g id="armGroup">
-                <line class="drop-cable" x1="380" y1="35" x2="380" y2="118" />
-                <rect class="servo-box" x="322" y="112" width="116" height="72" rx="12" />
-                <circle class="servo-hub" cx="380" cy="148" r="19" />
-                <rect class="arm-neck" x="362" y="180" width="36" height="94" rx="14" />
-                <rect class="palm" x="300" y="266" width="160" height="42" rx="12" />
-                <g id="leftJaw">
-                  <path class="jaw" d="M322 300 L262 338 L246 420 L288 420 L304 362 L354 330 Z" />
-                  <circle class="joint-dot" cx="324" cy="306" r="8" />
-                </g>
-                <g id="rightJaw">
-                  <path class="jaw" d="M438 300 L498 338 L514 420 L472 420 L456 362 L406 330 Z" />
-                  <circle class="joint-dot" cx="436" cy="306" r="8" />
-                </g>
-              </g>
-            </svg>
-          </div>
-          <div class="metric-pair">
-            <div>
-              <span>Arm</span>
-              <strong id="panRead">0%</strong>
-              <small>Flex A</small>
-            </div>
-            <div>
-              <span>Grip</span>
-              <strong id="gripRead">0%</strong>
-              <small>Flex B</small>
-            </div>
-          </div>
-          <div class="settings-grid gripper-settings">
-            <label><span>Arm Input</span><select id="armSource"><option value="flexA">Flex A</option><option value="flexB">Flex B</option></select></label>
-            <label><span>Arm Min</span><input id="armInMin" type="number" /></label>
-            <label><span>Arm Max</span><input id="armInMax" type="number" /></label>
-            <label><span>Grip Input</span><select id="gripSource"><option value="flexB">Flex B</option><option value="flexA">Flex A</option></select></label>
-            <label><span>Grip Min</span><input id="gripInMin" type="number" /></label>
-            <label><span>Grip Max</span><input id="gripInMax" type="number" /></label>
-          </div>
-        </article>
-
-        <article class="trainer-module" data-module-card="graphAudio">
-          <div class="module-head">
-            <div>
-              <span>Threshold Flex A + Flex B</span>
-              <h2>Modul Grafik & Suara</h2>
-            </div>
-            <label class="switch">
-              <input id="graphAudioToggle" type="checkbox" />
-              <span></span>
-            </label>
-          </div>
-          <canvas id="flexChart" class="chart" width="640" height="260" aria-label="Grafik realtime flex sensor"></canvas>
-          <div class="settings-grid audio-settings">
-            <label><span>Graph Min</span><input id="graphMin" type="number" /></label>
-            <label><span>Graph Max</span><input id="graphMax" type="number" /></label>
-          </div>
-          <div class="voice-row">
-            <button id="enableVoice" class="small-action">Enable Voice</button>
-            <button id="speakNow" class="small-action muted">Test Audio</button>
-            <span id="voiceStatus">Audio off</span>
-          </div>
-          <div class="dual-rules">
-            <section class="rule-panel">
-              <div class="rules-head">
-                <span>Flex A - range - teks</span>
-                <button id="addAudioRuleA" class="mini-action">Tambah</button>
-              </div>
-              <div class="threshold-list" id="audioRulesA"></div>
-            </section>
-            <section class="rule-panel">
-              <div class="rules-head">
-                <span>Flex B - range - teks</span>
-                <button id="addAudioRuleB" class="mini-action">Tambah</button>
-              </div>
-              <div class="threshold-list" id="audioRulesB"></div>
-            </section>
-          </div>
-        </article>
-      </section>
-
-      <section class="readout-strip">
-        <div>
-          <span>Flex A</span>
-          <strong id="flexARead">2048</strong>
-          <small>servo + posisi arm</small>
-        </div>
-        <div>
-          <span>Flex B</span>
-          <strong id="flexBRead">0</strong>
-          <small>grip + suara</small>
-        </div>
-        <div>
-          <span>Modul ON</span>
-          <strong id="activeModulesRead">1</strong>
-          <small>ON/OFF trainer</small>
-        </div>
-      </section>
-    </main>
-
-    <script src="assets/app.js"></script>
-  </body>
 </html>

@@ -282,7 +282,7 @@ h1 {
 
 .connection-bar {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto auto minmax(180px, 260px);
+  grid-template-columns: minmax(180px, 1fr) auto auto auto minmax(180px, 260px);
   align-items: end;
   gap: 8px;
   padding: 8px;
