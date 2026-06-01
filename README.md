@@ -18,6 +18,8 @@ Repository: https://github.com/triwahyu45/Flex-Sensor-Web-Simulator
 
 Setiap modul punya kalibrasi sendiri. Min/max input tetap tersedia sebagai fallback. Untuk sensor yang tidak linear, tambahkan titik kalibrasi ADC dan output aktuator. Tekuk sensor ke posisi yang diinginkan, tekan **Capture**, lalu isi nilai output: derajat Servo, posisi Arm `0-100%`, atau bukaan Grip `0-100%`. Setelah minimal dua ADC unik tersimpan, dashboard memakai interpolasi linear per segmen secara otomatis.
 
+Jika sensor terlalu sensitif di sekitar posisi tertentu, tambahkan zona toleransi. Contoh: zona Servo `1380-1420 -> 90°` membuat output tetap berada di `90°` selama ADC berada dalam rentang tersebut. Zona diprioritaskan sebelum interpolasi. Rentang zona yang terbalik atau saling overlap diabaikan sampai dikoreksi.
+
 Modul Grafik + Audio mendukung custom rules untuk dua sensor sekaligus. Atur range dan teks untuk **Flex A** dan **Flex B**; jika dua-duanya cocok, teks digabung. Contoh: Flex A menghasilkan `Halo` dan Flex B menghasilkan `Aulia`, maka laptop mengucapkan `Halo Aulia`. Rules disimpan di browser dengan `localStorage`.
 
 ## Cara Pakai Lokal

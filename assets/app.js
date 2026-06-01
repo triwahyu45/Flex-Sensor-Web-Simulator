@@ -15,16 +15,18 @@ const defaults = {
 };
 
 const defaultSettings = {
-  servo: { source: 'flexA', inMin: 0, inMax: 4095, outMin: 0, outMax: 180, points: [] },
+  servo: { source: 'flexA', inMin: 0, inMax: 4095, outMin: 0, outMax: 180, points: [], zones: [] },
   gripper: {
     armSource: 'flexA',
     armInMin: 0,
     armInMax: 4095,
     armPoints: [],
+    armZones: [],
     gripSource: 'flexB',
     gripInMin: 0,
     gripInMax: 4095,
     gripPoints: [],
+    gripZones: [],
   },
   audio: {
     graphMin: 0,
@@ -73,6 +75,18 @@ function mapCalibrationPoints(value, points, fallback) {
   return mapCalibrated(value, lower.adc, upper.adc, lower.output, upper.output);
 }
 
+function mapCalibrationZones(value, zones, fallback) {
+  const normalized = zones
+    .map((zone) => ({ min: numeric(zone.min, NaN), max: numeric(zone.max, NaN), output: numeric(zone.output, NaN) }))
+    .filter((zone) => Number.isFinite(zone.min) && Number.isFinite(zone.max) && Number.isFinite(zone.output))
+    .sort((a, b) => a.min - b.min);
+  const valid = normalized.length === zones.length
+    && normalized.every((zone, index) => zone.min <= zone.max && (index === 0 || normalized[index - 1].max < zone.min));
+  if (!valid) return fallback();
+  const match = normalized.find((zone) => value >= zone.min && value <= zone.max);
+  return match ? match.output : fallback();
+}
+
 function normalizeMdns(value) {
   const raw = String(value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   if (!raw) return '';
@@ -93,12 +107,14 @@ function loadSettings() {
     delete audio.source;
     delete audio.rules;
     return {
-      servo: { ...defaultSettings.servo, ...saved.servo, points: saved.servo?.points || [] },
+      servo: { ...defaultSettings.servo, ...saved.servo, points: saved.servo?.points || [], zones: saved.servo?.zones || [] },
       gripper: {
         ...defaultSettings.gripper,
         ...saved.gripper,
         armPoints: saved.gripper?.armPoints || [],
+        armZones: saved.gripper?.armZones || [],
         gripPoints: saved.gripper?.gripPoints || [],
+        gripZones: saved.gripper?.gripZones || [],
       },
       audio,
     };
@@ -133,11 +149,11 @@ function payloadFromFlex(flexA, flexB, mdns = '', settings = loadSettings()) {
     flexA: Math.round(flex.flexA),
     flexB: Math.round(flex.flexB),
     pan: round(mapCalibrated(
-      mapCalibrationPoints(armInput, settings.gripper.armPoints, () => mapCalibrated(armInput, settings.gripper.armInMin, settings.gripper.armInMax, 0, 100)),
+      mapCalibrationZones(armInput, settings.gripper.armZones, () => mapCalibrationPoints(armInput, settings.gripper.armPoints, () => mapCalibrated(armInput, settings.gripper.armInMin, settings.gripper.armInMax, 0, 100))),
       0, 100, -100, 100,
     ), 1),
-    servo: round(mapCalibrationPoints(servoInput, settings.servo.points, () => mapCalibrated(servoInput, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax)), 1),
-    grip: round(mapCalibrationPoints(gripInput, settings.gripper.gripPoints, () => mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 0, 100)), 1),
+    servo: round(mapCalibrationZones(servoInput, settings.servo.zones, () => mapCalibrationPoints(servoInput, settings.servo.points, () => mapCalibrated(servoInput, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax))), 1),
+    grip: round(mapCalibrationZones(gripInput, settings.gripper.gripZones, () => mapCalibrationPoints(gripInput, settings.gripper.gripPoints, () => mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 0, 100))), 1),
     phrase: phraseFromFlexes(flex.flexA, flex.flexB, settings),
     mdns: normalizeMdns(mdns),
     sentAt: Date.now(),
@@ -301,10 +317,53 @@ function initSimulator() {
     });
   }
 
+  function renderCalibrationZones(containerId, zones, sourceKey, outputLabel) {
+    const container = $(containerId);
+    container.innerHTML = '';
+    zones.forEach((zone, index) => {
+      const row = document.createElement('div');
+      row.className = 'zone-row';
+      row.innerHTML = `
+        <input type="number" value="${zone.min}" aria-label="ADC Min ${outputLabel}" placeholder="Min" />
+        <button class="mini-action" type="button">Cap Min</button>
+        <input type="number" value="${zone.max}" aria-label="ADC Max ${outputLabel}" placeholder="Max" />
+        <button class="mini-action" type="button">Cap Max</button>
+        <input type="number" value="${zone.output}" aria-label="${outputLabel}" placeholder="${outputLabel}" />
+        <button class="mini-action muted" type="button">Hapus</button>
+      `;
+      const [minInput, captureMin, maxInput, captureMax, outputInput, deleteButton] = row.children;
+      const update = () => {
+        zone.min = numeric(minInput.value);
+        zone.max = numeric(maxInput.value);
+        zone.output = numeric(outputInput.value);
+        saveSettings(settings);
+        target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
+      };
+      const capture = (input) => {
+        input.value = Math.round(current[settings[sourceKey.section][sourceKey.key]] ?? current.flexA);
+        update();
+      };
+      minInput.addEventListener('input', update);
+      maxInput.addEventListener('input', update);
+      outputInput.addEventListener('input', update);
+      captureMin.addEventListener('click', () => capture(minInput));
+      captureMax.addEventListener('click', () => capture(maxInput));
+      deleteButton.addEventListener('click', () => {
+        zones.splice(index, 1);
+        saveSettings(settings);
+        renderCalibrationEditors();
+      });
+      container.appendChild(row);
+    });
+  }
+
   function renderCalibrationEditors() {
     renderCalibrationPoints('servoPoints', settings.servo.points, { section: 'servo', key: 'source' }, 'Derajat');
     renderCalibrationPoints('armPoints', settings.gripper.armPoints, { section: 'gripper', key: 'armSource' }, 'Posisi %');
     renderCalibrationPoints('gripPoints', settings.gripper.gripPoints, { section: 'gripper', key: 'gripSource' }, 'Bukaan %');
+    renderCalibrationZones('servoZones', settings.servo.zones, { section: 'servo', key: 'source' }, 'Derajat');
+    renderCalibrationZones('armZones', settings.gripper.armZones, { section: 'gripper', key: 'armSource' }, 'Posisi %');
+    renderCalibrationZones('gripZones', settings.gripper.gripZones, { section: 'gripper', key: 'gripSource' }, 'Bukaan %');
     target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
   }
 
@@ -316,9 +375,20 @@ function initSimulator() {
     });
   }
 
+  function bindZoneAdd(buttonId, zones, output = 0) {
+    $(buttonId).addEventListener('click', () => {
+      zones.push({ min: 0, max: 0, output });
+      saveSettings(settings);
+      renderCalibrationEditors();
+    });
+  }
+
   bindCalibrationAdd('addServoPoint', settings.servo.points);
   bindCalibrationAdd('addArmPoint', settings.gripper.armPoints);
   bindCalibrationAdd('addGripPoint', settings.gripper.gripPoints);
+  bindZoneAdd('addServoZone', settings.servo.zones);
+  bindZoneAdd('addArmZone', settings.gripper.armZones);
+  bindZoneAdd('addGripZone', settings.gripper.gripZones);
   renderCalibrationEditors();
 
   function setHeaderStatus(text, state = 'yellow') {

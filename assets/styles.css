@@ -648,6 +648,14 @@ h1 {
   overflow: auto;
 }
 
+.zone-list {
+  display: grid;
+  gap: 4px;
+  max-height: 90px;
+  margin-top: 6px;
+  overflow: auto;
+}
+
 .calibration-row {
   display: grid;
   grid-template-columns: 62px 68px auto auto;
@@ -655,7 +663,15 @@ h1 {
   align-items: center;
 }
 
-.calibration-row input {
+.zone-row {
+  display: grid;
+  grid-template-columns: 56px auto 56px auto 64px auto;
+  gap: 4px;
+  align-items: center;
+}
+
+.calibration-row input,
+.zone-row input {
   min-width: 0;
   width: 100%;
   min-height: 26px;
