@@ -528,10 +528,20 @@ function initSimulator() {
       setHeaderStatus('Serial ESP32', 'green');
       setConnectionStatus('Connected: Serial ESP32', 'green');
       readSerialLoop();
-    } catch {
+    } catch (error) {
       await disconnectSerial();
-      setHeaderStatus('Disconnected - Serial unavailable', 'red');
-      setConnectionStatus('Serial cancelled or unavailable', 'red');
+      const errorName = error?.name || '';
+      const errorMessage = String(error?.message || '').toLowerCase();
+      if (errorName === 'NotFoundError') {
+        setHeaderStatus('Disconnected - Serial cancelled', 'red');
+        setConnectionStatus('Pemilihan COM dibatalkan', 'red');
+      } else if (errorName === 'NetworkError' || errorMessage.includes('failed to open') || errorMessage.includes('access denied')) {
+        setHeaderStatus('Disconnected - COM busy', 'red');
+        setConnectionStatus('Tutup Serial Monitor/Plotter lalu coba lagi', 'red');
+      } else {
+        setHeaderStatus('Disconnected - Serial unavailable', 'red');
+        setConnectionStatus(`Serial error: ${errorName || 'unknown'}`, 'red');
+      }
     }
   });
 
