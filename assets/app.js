@@ -486,11 +486,15 @@ const char* mdnsName = "flex-kelompok1";
 const int FLEX_A_PIN = 34;
 const int FLEX_B_PIN = 35;
 const int SAMPLE_COUNT = 10;
-const float EMA_ALPHA = 0.25;
+const unsigned long SENSOR_INTERVAL_MS = 20;
+const unsigned long WIFI_RETRY_INTERVAL_MS = 1000;
 
 WebServer server(80);
-float filteredFlexA = -1;
-float filteredFlexB = -1;
+int flexA = 0;
+int flexB = 0;
+unsigned long lastSensorRead = 0;
+unsigned long lastWifiRetry = 0;
+bool serverStarted = false;
 
 void sendCors() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -498,42 +502,21 @@ void sendCors() {
   server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
-int readFlexFiltered(int pin, float &previousValue) {
+int readFlexAverage(int pin) {
   long total = 0;
   for (int i = 0; i < SAMPLE_COUNT; i++) {
     total += analogRead(pin);
-    delayMicroseconds(200);
   }
-
-  float average = total / (float) SAMPLE_COUNT;
-  if (previousValue < 0) {
-    previousValue = average;
-  } else {
-    previousValue = (EMA_ALPHA * average) + ((1.0 - EMA_ALPHA) * previousValue);
-  }
-  return round(previousValue);
+  return total / SAMPLE_COUNT;
 }
 
 void handleData() {
-  int flexA = readFlexFiltered(FLEX_A_PIN, filteredFlexA);
-  int flexB = readFlexFiltered(FLEX_B_PIN, filteredFlexB);
   String json = "{\\\"flexA\\\":" + String(flexA) + ",\\\"flexB\\\":" + String(flexB) + "}";
   sendCors();
   server.send(200, "application/json", json);
 }
 
-void setup() {
-  Serial.begin(115200);
-  analogReadResolution(12);
-  analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
-  analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
-
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(300);
-    Serial.print(".");
-  }
-
+void startWebServer() {
   if (MDNS.begin(mdnsName)) {
     Serial.println("mDNS: http://" + String(mdnsName) + ".local/data");
   }
@@ -544,10 +527,39 @@ void setup() {
   });
   server.on("/data", HTTP_GET, handleData);
   server.begin();
+  serverStarted = true;
+}
+
+void setup() {
+  Serial.begin(115200);
+  analogReadResolution(12);
+  analogSetPinAttenuation(FLEX_A_PIN, ADC_11db);
+  analogSetPinAttenuation(FLEX_B_PIN, ADC_11db);
+
+  flexA = readFlexAverage(FLEX_A_PIN);
+  flexB = readFlexAverage(FLEX_B_PIN);
+  WiFi.begin(ssid, password);
 }
 
 void loop() {
-  server.handleClient();
+  unsigned long now = millis();
+
+  if (now - lastSensorRead >= SENSOR_INTERVAL_MS) {
+    lastSensorRead = now;
+    flexA = readFlexAverage(FLEX_A_PIN);
+    flexB = readFlexAverage(FLEX_B_PIN);
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    if (!serverStarted) {
+      startWebServer();
+    }
+    server.handleClient();
+  } else if (now - lastWifiRetry >= WIFI_RETRY_INTERVAL_MS) {
+    lastWifiRetry = now;
+    Serial.println("Menghubungkan WiFi...");
+    WiFi.reconnect();
+  }
 }`;
 
 function initVirtualEsp32() {
