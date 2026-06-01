@@ -78,6 +78,13 @@
           <label><span>Out Min</span><input id="servoOutMin" type="number" /></label>
           <label><span>Out Max</span><input id="servoOutMax" type="number" /></label>
         </div>
+        <div class="calibration-panel">
+          <div class="rules-head">
+            <span>Kalibrasi ADC - Derajat</span>
+            <button id="addServoPoint" class="mini-action">Tambah</button>
+          </div>
+          <div class="calibration-list" id="servoPoints"></div>
+        </div>
       </article>
 
       <article class="trainer-module" data-module-card="gripper">
@@ -138,6 +145,20 @@
             </select></label>
           <label><span>Grip Min</span><input id="gripInMin" type="number" /></label>
           <label><span>Grip Max</span><input id="gripInMax" type="number" /></label>
+        </div>
+        <div class="calibration-panel">
+          <div class="rules-head">
+            <span>Kalibrasi Arm ADC - Posisi %</span>
+            <button id="addArmPoint" class="mini-action">Tambah</button>
+          </div>
+          <div class="calibration-list" id="armPoints"></div>
+        </div>
+        <div class="calibration-panel">
+          <div class="rules-head">
+            <span>Kalibrasi Grip ADC - Bukaan %</span>
+            <button id="addGripPoint" class="mini-action">Tambah</button>
+          </div>
+          <div class="calibration-list" id="gripPoints"></div>
         </div>
       </article>
 

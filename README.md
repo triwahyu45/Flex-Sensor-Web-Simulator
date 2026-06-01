@@ -16,7 +16,7 @@ Repository: https://github.com/triwahyu45/Flex-Sensor-Web-Simulator
 - **Arm Gripper**: Flex A menggeser arm, Flex B membuka/menutup gripper jika bagan Gripper ON.
 - **Grafik + Audio**: grafik realtime flex sensor berjalan dan threshold Flex A + Flex B memicu suara jika bagan Grafik + Audio ON.
 
-Setiap modul punya kalibrasi sendiri. Min/max input bisa disesuaikan karena nilai analog flex sensor tiap hardware bisa berbeda. Contoh: jika sensor hanya bergerak dari 900 sampai 2600, isi input min/max modul dengan rentang tersebut agar visual tetap full-scale.
+Setiap modul punya kalibrasi sendiri. Min/max input tetap tersedia sebagai fallback. Untuk sensor yang tidak linear, tambahkan titik kalibrasi ADC dan output aktuator. Tekuk sensor ke posisi yang diinginkan, tekan **Capture**, lalu isi nilai output: derajat Servo, posisi Arm `0-100%`, atau bukaan Grip `0-100%`. Setelah minimal dua ADC unik tersimpan, dashboard memakai interpolasi linear per segmen secara otomatis.
 
 Modul Grafik + Audio mendukung custom rules untuk dua sensor sekaligus. Atur range dan teks untuk **Flex A** dan **Flex B**; jika dua-duanya cocok, teks digabung. Contoh: Flex A menghasilkan `Halo` dan Flex B menghasilkan `Aulia`, maka laptop mengucapkan `Halo Aulia`. Rules disimpan di browser dengan `localStorage`.
 
@@ -80,10 +80,12 @@ Dashboard juga bisa membaca ESP32 langsung dari kabel USB tanpa Wi-Fi. Buka dash
 Mode Serial membaca output sketch pada baudrate `115200`:
 
 ```text
-Flex A: 1240 | Flex B: 1382
+FlexA:1240 FlexB:1382
 ```
 
 Saat Serial aktif, polling mDNS dan stream Virtual ESP32 diabaikan. Tombol **Disconnect** menutup koneksi Serial maupun mDNS.
+
+Format tersebut juga bisa dibuka melalui Arduino Serial Plotter pada baudrate `115200` untuk melihat dua garis `FlexA` dan `FlexB`. Tutup dashboard Serial sebelum membuka Serial Plotter, atau sebaliknya, karena satu COM port hanya dapat dipakai satu aplikasi pada satu waktu.
 
 Endpoint ESP32 perlu mengembalikan JSON:
 

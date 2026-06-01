@@ -15,8 +15,17 @@ const defaults = {
 };
 
 const defaultSettings = {
-  servo: { source: 'flexA', inMin: 0, inMax: 4095, outMin: 0, outMax: 180 },
-  gripper: { armSource: 'flexA', armInMin: 0, armInMax: 4095, gripSource: 'flexB', gripInMin: 0, gripInMax: 4095 },
+  servo: { source: 'flexA', inMin: 0, inMax: 4095, outMin: 0, outMax: 180, points: [] },
+  gripper: {
+    armSource: 'flexA',
+    armInMin: 0,
+    armInMax: 4095,
+    armPoints: [],
+    gripSource: 'flexB',
+    gripInMin: 0,
+    gripInMax: 4095,
+    gripPoints: [],
+  },
   audio: {
     graphMin: 0,
     graphMax: 4095,
@@ -49,6 +58,21 @@ function mapCalibrated(value, inMin, inMax, outMin, outMax) {
   return outMin + ratio * (outMax - outMin);
 }
 
+function mapCalibrationPoints(value, points, fallback) {
+  const normalized = points
+    .map((point) => ({ adc: numeric(point.adc, NaN), output: numeric(point.output, NaN) }))
+    .filter((point) => Number.isFinite(point.adc) && Number.isFinite(point.output))
+    .sort((a, b) => a.adc - b.adc);
+  const unique = normalized.filter((point, index) => index === 0 || point.adc !== normalized[index - 1].adc);
+  if (unique.length < 2 || unique.length !== normalized.length) return fallback();
+  if (value <= unique[0].adc) return unique[0].output;
+  if (value >= unique.at(-1).adc) return unique.at(-1).output;
+  const upperIndex = unique.findIndex((point) => point.adc >= value);
+  const lower = unique[upperIndex - 1];
+  const upper = unique[upperIndex];
+  return mapCalibrated(value, lower.adc, upper.adc, lower.output, upper.output);
+}
+
 function normalizeMdns(value) {
   const raw = String(value || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   if (!raw) return '';
@@ -69,8 +93,13 @@ function loadSettings() {
     delete audio.source;
     delete audio.rules;
     return {
-      servo: { ...defaultSettings.servo, ...saved.servo },
-      gripper: { ...defaultSettings.gripper, ...saved.gripper },
+      servo: { ...defaultSettings.servo, ...saved.servo, points: saved.servo?.points || [] },
+      gripper: {
+        ...defaultSettings.gripper,
+        ...saved.gripper,
+        armPoints: saved.gripper?.armPoints || [],
+        gripPoints: saved.gripper?.gripPoints || [],
+      },
       audio,
     };
   } catch {
@@ -103,9 +132,12 @@ function payloadFromFlex(flexA, flexB, mdns = '', settings = loadSettings()) {
   return {
     flexA: Math.round(flex.flexA),
     flexB: Math.round(flex.flexB),
-    pan: round(mapCalibrated(armInput, settings.gripper.armInMin, settings.gripper.armInMax, -100, 100), 1),
-    servo: round(mapCalibrated(servoInput, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax), 1),
-    grip: round(mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 0, 100), 1),
+    pan: round(mapCalibrated(
+      mapCalibrationPoints(armInput, settings.gripper.armPoints, () => mapCalibrated(armInput, settings.gripper.armInMin, settings.gripper.armInMax, 0, 100)),
+      0, 100, -100, 100,
+    ), 1),
+    servo: round(mapCalibrationPoints(servoInput, settings.servo.points, () => mapCalibrated(servoInput, settings.servo.inMin, settings.servo.inMax, settings.servo.outMin, settings.servo.outMax)), 1),
+    grip: round(mapCalibrationPoints(gripInput, settings.gripper.gripPoints, () => mapCalibrated(gripInput, settings.gripper.gripInMin, settings.gripper.gripInMax, 0, 100)), 1),
     phrase: phraseFromFlexes(flex.flexA, flex.flexB, settings),
     mdns: normalizeMdns(mdns),
     sentAt: Date.now(),
@@ -235,6 +267,60 @@ function initSimulator() {
     ['graphMax', ['audio', 'graphMax'], true],
   ].forEach(([id, path, isNumber]) => bindSetting(id, path, isNumber));
 
+  function renderCalibrationPoints(containerId, points, sourceKey, outputLabel) {
+    const container = $(containerId);
+    container.innerHTML = '';
+    points.forEach((point, index) => {
+      const row = document.createElement('div');
+      row.className = 'calibration-row';
+      row.innerHTML = `
+        <input type="number" value="${point.adc}" aria-label="ADC ${outputLabel}" placeholder="ADC" />
+        <input type="number" value="${point.output}" aria-label="${outputLabel}" placeholder="${outputLabel}" />
+        <button class="mini-action" type="button">Capture</button>
+        <button class="mini-action muted" type="button">Hapus</button>
+      `;
+      const [adcInput, outputInput, captureButton, deleteButton] = row.children;
+      const update = () => {
+        point.adc = numeric(adcInput.value);
+        point.output = numeric(outputInput.value);
+        saveSettings(settings);
+        target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
+      };
+      adcInput.addEventListener('input', update);
+      outputInput.addEventListener('input', update);
+      captureButton.addEventListener('click', () => {
+        adcInput.value = Math.round(current[settings[sourceKey.section][sourceKey.key]] ?? current.flexA);
+        update();
+      });
+      deleteButton.addEventListener('click', () => {
+        points.splice(index, 1);
+        saveSettings(settings);
+        renderCalibrationEditors();
+      });
+      container.appendChild(row);
+    });
+  }
+
+  function renderCalibrationEditors() {
+    renderCalibrationPoints('servoPoints', settings.servo.points, { section: 'servo', key: 'source' }, 'Derajat');
+    renderCalibrationPoints('armPoints', settings.gripper.armPoints, { section: 'gripper', key: 'armSource' }, 'Posisi %');
+    renderCalibrationPoints('gripPoints', settings.gripper.gripPoints, { section: 'gripper', key: 'gripSource' }, 'Bukaan %');
+    target = payloadFromFlex(current.flexA, current.flexB, target.mdns, settings);
+  }
+
+  function bindCalibrationAdd(buttonId, points, output = 0) {
+    $(buttonId).addEventListener('click', () => {
+      points.push({ adc: 0, output });
+      saveSettings(settings);
+      renderCalibrationEditors();
+    });
+  }
+
+  bindCalibrationAdd('addServoPoint', settings.servo.points);
+  bindCalibrationAdd('addArmPoint', settings.gripper.armPoints);
+  bindCalibrationAdd('addGripPoint', settings.gripper.gripPoints);
+  renderCalibrationEditors();
+
   function setHeaderStatus(text, state = 'yellow') {
     refs.status.innerHTML = `<i id="connectionLed" class="led led-${state}"></i> ${text}`;
     refs.status.classList.toggle('live', state === 'green');
@@ -282,7 +368,8 @@ function initSimulator() {
   }
 
   function acceptSerialLine(line) {
-    const match = line.match(/Flex A:\s*(\d+)\s*\|\s*Flex B:\s*(\d+)/i);
+    const match = line.match(/FlexA:\s*(\d+)\s+FlexB:\s*(\d+)/i)
+      || line.match(/Flex A:\s*(\d+)\s*\|\s*Flex B:\s*(\d+)/i);
     if (!match) return;
     acceptPayload({ flexA: Number(match[1]), flexB: Number(match[2]) }, 'Serial ESP32');
     setConnectionStatus('Connected: Serial ESP32', 'green');
@@ -738,9 +825,9 @@ void loop() {
 
   if (now - lastSerialPrint >= SERIAL_INTERVAL_MS) {
     lastSerialPrint = now;
-    Serial.print("Flex A: ");
+    Serial.print("FlexA:");
     Serial.print(flexA);
-    Serial.print(" | Flex B: ");
+    Serial.print(" FlexB:");
     Serial.println(flexB);
   }
 
