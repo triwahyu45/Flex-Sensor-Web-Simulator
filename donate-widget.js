@@ -1,6 +1,34 @@
 (function() {
     if (document.getElementById('tw45-donate-widget-container')) return;
 
+    // Detect user language (Browser language + Geo IP fallback)
+    let userLang = localStorage.getItem('tw45_lang');
+    if (!userLang) {
+        const navLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        userLang = navLang.startsWith('id') ? 'id' : 'en';
+    }
+
+    const translations = {
+        id: {
+            btn: "Dukung / Donate",
+            title: "💖 Dukung Karya Ini",
+            desc: "Terima kasih telah menggunakan aplikasi ini! Dukungan kamu sangat berarti untuk pengembangan proyek ini.",
+            saweria: "💛 Saweria (QRIS / DANA / OVO)",
+            trakteer: "☕ Trakteer (Kopi & Dukungan)",
+            linktree: "🌳 Linktree Tri Wahyu (Semua Link)",
+            footer: "Dibuat oleh Tri Wahyu (@triwahyu45)"
+        },
+        en: {
+            btn: "Support / Donate",
+            title: "💖 Support This Project",
+            desc: "Thank you for using this app! Your support means a lot for the ongoing development of this project.",
+            saweria: "💛 Saweria (QRIS / Local E-Wallet)",
+            trakteer: "☕ Trakteer (Coffee & Support)",
+            linktree: "🌳 Linktree Tri Wahyu (All Links)",
+            footer: "Created by Tri Wahyu (@triwahyu45)"
+        }
+    };
+
     const style = document.createElement('style');
     style.innerHTML = `
         .tw45-donate-btn {
@@ -49,7 +77,7 @@
             position: fixed;
             bottom: 80px;
             right: 20px;
-            width: 320px;
+            width: 330px;
             max-width: calc(100vw - 40px);
             background: #18191c;
             border: 1px solid rgba(255, 255, 255, 0.12);
@@ -82,6 +110,25 @@
             align-items: center;
             gap: 6px;
             color: #fff;
+        }
+        .tw45-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tw45-lang-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .tw45-lang-toggle:hover {
+            background: rgba(255, 255, 255, 0.25);
         }
         .tw45-close-btn {
             background: rgba(255, 255, 255, 0.1);
@@ -153,36 +200,63 @@
     container.innerHTML = `
         <div class="tw45-donate-overlay" id="tw45-overlay"></div>
         <button class="tw45-donate-btn" id="tw45-btn">
-            ❤️ <span>Dukung / Donate</span>
+            ❤️ <span id="tw45-btn-txt"></span>
         </button>
         <div class="tw45-donate-modal" id="tw45-modal">
             <div class="tw45-modal-header">
-                <div class="tw45-modal-title">💖 Dukung Karya Ini</div>
-                <button class="tw45-close-btn" id="tw45-close">✕</button>
+                <div class="tw45-modal-title" id="tw45-title"></div>
+                <div class="tw45-header-right">
+                    <button class="tw45-lang-toggle" id="tw45-lang-btn"></button>
+                    <button class="tw45-close-btn" id="tw45-close">✕</button>
+                </div>
             </div>
-            <div class="tw45-modal-desc">
-                Terima kasih telah menggunakan aplikasi ini! Dukungan kamu sangat berarti untuk pengembangan proyek ini.
-            </div>
+            <div class="tw45-modal-desc" id="tw45-desc"></div>
             <div class="tw45-donate-links">
                 <a href="https://saweria.co/triwahyu45" target="_blank" rel="noopener noreferrer" class="tw45-donate-link tw45-link-saweria">
-                    <span>💛 Saweria (QRIS / DANA / OVO)</span> ➔
+                    <span id="tw45-saweria-txt"></span> ➔
                 </a>
                 <a href="https://trakteer.id/triwahyu45" target="_blank" rel="noopener noreferrer" class="tw45-donate-link tw45-link-trakteer">
-                    <span>☕ Trakteer (Kopi & Dukungan)</span> ➔
+                    <span id="tw45-trakteer-txt"></span> ➔
                 </a>
                 <a href="https://linktr.ee/triwahyu45" target="_blank" rel="noopener noreferrer" class="tw45-donate-link tw45-link-linktree">
-                    <span>🌳 Linktree Tri Wahyu (Semua Link)</span> ➔
+                    <span id="tw45-linktree-txt"></span> ➔
                 </a>
             </div>
-            <div class="tw45-footer-tag">Dibuat oleh Tri Wahyu (@triwahyu45)</div>
+            <div class="tw45-footer-tag" id="tw45-footer-txt"></div>
         </div>
     `;
     document.body.appendChild(container);
+
+    function updateWidgetText() {
+        const t = translations[userLang] || translations.id;
+        document.getElementById('tw45-btn-txt').innerText = t.btn;
+        document.getElementById('tw45-title').innerText = t.title;
+        document.getElementById('tw45-desc').innerText = t.desc;
+        document.getElementById('tw45-saweria-txt').innerText = t.saweria;
+        document.getElementById('tw45-trakteer-txt').innerText = t.trakteer;
+        document.getElementById('tw45-linktree-txt').innerText = t.linktree;
+        document.getElementById('tw45-footer-txt').innerText = t.footer;
+        document.getElementById('tw45-lang-btn').innerText = userLang === 'id' ? '🇬🇧 EN' : '🇮🇩 ID';
+    }
+
+    // Geo IP Lookup Fallback
+    fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(data => {
+            if (!localStorage.getItem('tw45_lang') && data && data.country_code) {
+                userLang = data.country_code === 'ID' ? 'id' : 'en';
+                updateWidgetText();
+            }
+        })
+        .catch(() => {});
+
+    updateWidgetText();
 
     const btn = document.getElementById('tw45-btn');
     const modal = document.getElementById('tw45-modal');
     const overlay = document.getElementById('tw45-overlay');
     const closeBtn = document.getElementById('tw45-close');
+    const langBtn = document.getElementById('tw45-lang-btn');
 
     function toggleModal(show) {
         if (show) {
@@ -197,4 +271,11 @@
     btn.addEventListener('click', () => toggleModal(!modal.classList.contains('active')));
     closeBtn.addEventListener('click', () => toggleModal(false));
     overlay.addEventListener('click', () => toggleModal(false));
+
+    langBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userLang = userLang === 'id' ? 'en' : 'id';
+        localStorage.setItem('tw45_lang', userLang);
+        updateWidgetText();
+    });
 })();
