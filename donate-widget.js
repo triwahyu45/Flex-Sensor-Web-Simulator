@@ -12,7 +12,8 @@
         id: {
             btn: "Dukung / Donate",
             title: "💖 Dukung Karya Ini",
-            desc: "Terima kasih telah menggunakan aplikasi ini! Dukungan kamu sangat berarti untuk pengembangan proyek ini.",
+            desc: "Terima kasih telah menggunakan aplikasi ini! Dukungan kamu sangat berarti untuk pengembangan proyek open-source & robotika ini.",
+            sociabuzz: "⚡ SociaBuzz (Global / PayPal / Card / QRIS)",
             saweria: "💛 Saweria (QRIS / DANA / OVO)",
             trakteer: "☕ Trakteer (Kopi & Dukungan)",
             linktree: "🌳 Linktree Tri Wahyu (Semua Link)",
@@ -21,7 +22,8 @@
         en: {
             btn: "Support / Donate",
             title: "💖 Support This Project",
-            desc: "Thank you for using this app! Your support means a lot for the ongoing development of this project.",
+            desc: "Thank you for using this app! Your support means a lot for the ongoing development of this robotics & AI project.",
+            sociabuzz: "⚡ SociaBuzz (International / PayPal / Card / QRIS)",
             saweria: "💛 Saweria (QRIS / Local E-Wallet)",
             trakteer: "☕ Trakteer (Coffee & Support)",
             linktree: "🌳 Linktree Tri Wahyu (All Links)",
@@ -36,7 +38,7 @@
             bottom: 20px;
             right: 20px;
             z-index: 999999;
-            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            background: linear-gradient(135deg, #2563eb, #3b82f6, #ec4899);
             color: #fff;
             border: none;
             padding: 10px 18px;
@@ -44,7 +46,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             font-size: 14px;
             font-weight: 600;
-            box-shadow: 0 8px 24px rgba(255, 65, 108, 0.4);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -54,7 +56,7 @@
         }
         .tw45-donate-btn:hover {
             transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 12px 30px rgba(255, 65, 108, 0.6);
+            box-shadow: 0 12px 30px rgba(236, 72, 153, 0.6);
         }
         .tw45-donate-btn:active {
             transform: translateY(0) scale(0.98);
@@ -62,7 +64,7 @@
         .tw45-donate-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.65);
             backdrop-filter: blur(6px);
             z-index: 999998;
             opacity: 0;
@@ -77,13 +79,13 @@
             position: fixed;
             bottom: 80px;
             right: 20px;
-            width: 330px;
+            width: 340px;
             max-width: calc(100vw - 40px);
             background: #18191c;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 20px;
             padding: 22px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);
             z-index: 999999;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             color: #fff;
@@ -174,6 +176,11 @@
         .tw45-donate-link:hover {
             transform: translateX(4px);
         }
+        .tw45-link-sociabuzz {
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #60a5fa 100%);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(29, 78, 216, 0.35);
+        }
         .tw45-link-saweria {
             background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             color: #111;
@@ -190,7 +197,7 @@
             margin-top: 14px;
             text-align: center;
             font-size: 11px;
-            color: #555;
+            color: #666;
         }
     `;
     document.head.appendChild(style);
@@ -212,6 +219,9 @@
             </div>
             <div class="tw45-modal-desc" id="tw45-desc"></div>
             <div class="tw45-donate-links">
+                <a href="https://sociabuzz.com/triwahyu45" target="_blank" rel="noopener noreferrer" class="tw45-donate-link tw45-link-sociabuzz">
+                    <span id="tw45-sociabuzz-txt"></span> ➔
+                </a>
                 <a href="https://saweria.co/triwahyu45" target="_blank" rel="noopener noreferrer" class="tw45-donate-link tw45-link-saweria">
                     <span id="tw45-saweria-txt"></span> ➔
                 </a>
@@ -232,6 +242,7 @@
         document.getElementById('tw45-btn-txt').innerText = t.btn;
         document.getElementById('tw45-title').innerText = t.title;
         document.getElementById('tw45-desc').innerText = t.desc;
+        document.getElementById('tw45-sociabuzz-txt').innerText = t.sociabuzz;
         document.getElementById('tw45-saweria-txt').innerText = t.saweria;
         document.getElementById('tw45-trakteer-txt').innerText = t.trakteer;
         document.getElementById('tw45-linktree-txt').innerText = t.linktree;
